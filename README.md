@@ -20,13 +20,13 @@ Uses Socket.io for real time communication and stores user details in encrypted 
 Clone the project
 
 ```bash
-  git clone https://github.com/piyush-eon/mern-chat-app
+  git clone https://github.com/piyush-eon/Chatify
 ```
 
 Go to the project directory
 
 ```bash
-  cd mern-chat-app
+  cd Chatify
 ```
 
 Install dependencies
