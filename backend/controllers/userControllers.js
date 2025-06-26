@@ -82,4 +82,26 @@ const authUser = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { allUsers, registerUser, authUser };
+//@description     Update user profile picture
+//@route           PUT /api/user/profile
+//@access          Private
+const updateProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+  if (req.body.pic) user.pic = req.body.pic;
+  // Add more fields if needed
+  await user.save();
+  res.json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    isAdmin: user.isAdmin,
+    pic: user.pic,
+    token: generateToken(user._id),
+  });
+});
+
+module.exports = { allUsers, registerUser, authUser, updateProfile };

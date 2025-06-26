@@ -6,13 +6,14 @@ import { useEffect, useState } from "react";
 import { getSender } from "../config/ChatLogics";
 import ChatLoading from "./ChatLoading";
 import GroupChatModal from "./miscellaneous/GroupChatModal";
-import { Button } from "@chakra-ui/react";
+import { Button, Tabs, TabList, Tab, TabPanels, TabPanel } from "@chakra-ui/react";
 import { ChatState } from "../Context/ChatProvider";
 
 const MyChats = ({ fetchAgain }) => {
   const [loggedUser, setLoggedUser] = useState();
+  const [selectedTab, setSelectedTab] = useState(0); // 0: All, 1: Groups, 2: Unread
 
-  const { selectedChat, setSelectedChat, user, chats, setChats } = ChatState();
+  const { selectedChat, setSelectedChat, user, chats, setChats, notification } = ChatState();
 
   const toast = useToast();
 
@@ -45,6 +46,16 @@ const MyChats = ({ fetchAgain }) => {
     // eslint-disable-next-line
   }, [fetchAgain]);
 
+  // Filtering logic
+  let filteredChats = chats || [];
+  if (selectedTab === 1) {
+    filteredChats = filteredChats.filter((chat) => chat.isGroupChat);
+  } else if (selectedTab === 2) {
+    // Show chats that have a notification for them
+    const unreadChatIds = notification.map((notif) => notif.chat && notif.chat._id);
+    filteredChats = filteredChats.filter((chat) => unreadChatIds.includes(chat._id));
+  }
+
   return (
     <Box
       d={{ base: selectedChat ? "none" : "flex", md: "flex" }}
@@ -66,7 +77,7 @@ const MyChats = ({ fetchAgain }) => {
         justifyContent="space-between"
         alignItems="center"
       >
-        My Chats
+        <Text fontWeight="bold">Chats</Text>
         <GroupChatModal>
           <Button
             d="flex"
@@ -77,6 +88,21 @@ const MyChats = ({ fetchAgain }) => {
           </Button>
         </GroupChatModal>
       </Box>
+      {/* Tabs for filtering */}
+      <Tabs
+        index={selectedTab}
+        onChange={setSelectedTab}
+        variant="soft-rounded"
+        colorScheme="teal"
+        w="100%"
+        mb={2}
+      >
+        <TabList>
+          <Tab>All</Tab>
+          <Tab>Groups</Tab>
+          <Tab>Unread</Tab>
+        </TabList>
+      </Tabs>
       <Box
         d="flex"
         flexDir="column"
@@ -89,7 +115,7 @@ const MyChats = ({ fetchAgain }) => {
       >
         {chats ? (
           <Stack overflowY="scroll">
-            {chats.map((chat) => (
+            {filteredChats.map((chat) => (
               <Box
                 onClick={() => setSelectedChat(chat)}
                 cursor="pointer"

@@ -34,7 +34,14 @@ function Homepage() {
         borderRadius="lg"
         borderWidth="1px"
       >
-        <Text fontSize="4xl" fontFamily="Work sans">
+        <Text
+          fontSize="4xl"
+          fontFamily="Work sans"
+          fontWeight="bold"
+          bgGradient="linear(to-r, teal.400, blue.500)"
+          bgClip="text"
+          letterSpacing="wide"
+        >
           Chatify
         </Text>
       </Box>

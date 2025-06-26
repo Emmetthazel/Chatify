@@ -134,14 +134,37 @@ function SideDrawer() {
         borderWidth="5px"
       >
         <Tooltip label="Search Users to chat" hasArrow placement="bottom-end">
-          <Button variant="ghost" onClick={onOpen}>
-            <i className="fas fa-search"></i>
-            <Text d={{ base: "none", md: "flex" }} px={4}>
+          <Button
+            variant="outline"
+            onClick={onOpen}
+            bg="gray.200"
+            borderColor="gray.200"
+            borderWidth="1px"
+            borderRadius="md"
+            boxShadow="sm"
+            _hover={{ bg: 'gray.50' }}
+            _active={{ bg: 'gray.100' }}
+            leftIcon={<i className="fas fa-search"></i>}
+            px={4}
+            py={2}
+            fontWeight="normal"
+            fontSize="lg"
+            display="flex"
+            alignItems="center"
+          >
+            <Text d={{ base: "none", md: "flex" }} px={2}>
               Search User
             </Text>
           </Button>
         </Tooltip>
-        <Text fontSize="2xl" fontFamily="Work sans">
+        <Text
+          fontSize="2xl"
+          fontFamily="Work sans"
+          fontWeight="bold"
+          bgGradient="linear(to-r, teal.400, blue.500)"
+          bgClip="text"
+          letterSpacing="wide"
+        >
           Chatify
         </Text>
         <div>
