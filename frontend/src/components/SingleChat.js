@@ -17,7 +17,7 @@ import io from "socket.io-client";
 import UpdateGroupChatModal from "./miscellaneous/UpdateGroupChatModal";
 import { ChatState } from "../Context/ChatProvider";
 import { Avatar } from "@chakra-ui/avatar";
-import { FaMicrophone, FaStop } from "react-icons/fa";
+import { FaMicrophone, FaStop, FaFileAlt } from "react-icons/fa";
 const ENDPOINT = "http://localhost:5000"; // "https://talk-a-tive.herokuapp.com"; -> After deployment
 var socket, selectedChatCompare;
 
@@ -34,6 +34,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const [audioChunks, setAudioChunks] = useState([]);
   const [audioLoading, setAudioLoading] = useState(false);
+  const [docLoading, setDocLoading] = useState(false);
+  const [docFile, setDocFile] = useState(null);
   const toast = useToast();
 
   const defaultOptions = {
@@ -354,6 +356,36 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }
   };
 
+  // Document upload handler
+  const handleDocUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setDocLoading(true);
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      data.append("chatId", selectedChat._id);
+      const config = {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+      const res = await axios.post("/api/message", data, config);
+      socket.emit("new message", res.data);
+      setMessages([...messages, res.data]);
+    } catch (err) {
+      toast({
+        title: "Error uploading document",
+        description: err.message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "bottom",
+      });
+    }
+    setDocLoading(false);
+  };
+
   // Helper to format the date for the top separator
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -462,7 +494,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                       maxWidth: '100%',
                       textAlign: 'center',
                     }}>
-                      {formatDate(messages[0].createdAt)}
+                      {formatDate(messages[messages.length - 1].createdAt)}
                     </span>
                   </div>
                 )}
@@ -520,6 +552,20 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                   />
                 </label>
               </span>
+              {/* Document upload button with different icon */}
+              <span style={{ position: 'absolute', left: 80, top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}>
+                <label htmlFor="chat-doc-upload" style={{ cursor: 'pointer', margin: 0 }}>
+                  <FaFileAlt size={20} color="#555" />
+                  <input
+                    id="chat-doc-upload"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.csv,.json,.xml,.md,.rtf,.odt,.ods,.odp"
+                    style={{ display: 'none' }}
+                    onChange={handleDocUpload}
+                    disabled={docLoading}
+                  />
+                </label>
+              </span>
               {showEmojiPicker && (
                 <div style={{ position: 'absolute', bottom: '60px', left: 0, zIndex: 10 }}>
                   <Picker data={data} onEmojiSelect={addEmoji} theme="dark" />
@@ -528,11 +574,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               <Input
                 variant="filled"
                 bg="#E0E0E0"
-                placeholder={imageLoading ? "Uploading image..." : audioLoading ? "Uploading audio..." : "Type a message"}
+                placeholder={docLoading ? "Uploading document..." : imageLoading ? "Uploading image..." : audioLoading ? "Uploading audio..." : "Type a message"}
                 value={newMessage}
                 onChange={typingHandler}
-                style={{ paddingLeft: 90, paddingRight: 50 }}
-                disabled={imageLoading || audioLoading}
+                style={{ paddingLeft: 120, paddingRight: 50 }}
+                disabled={imageLoading || audioLoading || docLoading}
               />
               {/* Audio record button on the right */}
               <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}>
@@ -565,7 +611,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                       padding: 0,
                     }}
                     aria-label="Record audio"
-                    disabled={audioLoading || imageLoading}
+                    disabled={audioLoading || imageLoading || docLoading}
                   >
                     <FaMicrophone />
                   </button>

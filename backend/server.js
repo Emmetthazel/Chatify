@@ -21,6 +21,9 @@ app.use("/api/user", userRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/message", messageRoutes);
 
+// Serve uploads folder
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
+
 // --------------------------deployment------------------------------
 
 const __dirname1 = path.resolve();

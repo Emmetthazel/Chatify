@@ -53,6 +53,9 @@ function SideDrawer() {
 
   const logoutHandler = () => {
     localStorage.removeItem("userInfo");
+    setSelectedChat(undefined);
+    setChats([]);
+    setNotification([]);
     history.push("/");
   };
 
@@ -132,13 +135,16 @@ function SideDrawer() {
         w="100%"
         p="5px 10px 5px 10px"
         borderWidth="5px"
+        borderRadius="md"
       >
         <Tooltip label="Search Users to chat" hasArrow placement="bottom-end">
           <Button
+            w="30.5%"
+            h="37px"
             variant="outline"
             onClick={onOpen}
-            bg="gray.200"
-            borderColor="gray.200"
+            bg="gray.100"
+            //borderColor="gray.200"
             borderWidth="1px"
             borderRadius="md"
             boxShadow="sm"
@@ -153,7 +159,7 @@ function SideDrawer() {
             alignItems="center"
           >
             <Text d={{ base: "none", md: "flex" }} px={2}>
-              Search User
+              Search Users
             </Text>
           </Button>
         </Tooltip>

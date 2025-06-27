@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const Chat = require("../models/chatModel");
 const User = require("../models/userModel");
+const Message = require("../models/messageModel");
 
 //@description     Create or fetch One to One Chat
 //@route           POST /api/chat/
@@ -29,6 +30,15 @@ const accessChat = asyncHandler(async (req, res) => {
   });
 
   if (isChat.length > 0) {
+    // If the chat was previously deleted for this user, undelete it and mark all previous messages as deleted for this user
+    const chat = isChat[0];
+    if (chat.deletedBy && chat.deletedBy.includes(req.user._id)) {
+      await Chat.findByIdAndUpdate(chat._id, { $pull: { deletedBy: req.user._id } });
+      await Message.updateMany(
+        { chat: chat._id },
+        { $addToSet: { deletedBy: req.user._id } }
+      );
+    }
     res.send(isChat[0]);
   } else {
     var chatData = {
@@ -56,7 +66,11 @@ const accessChat = asyncHandler(async (req, res) => {
 //@access          Protected
 const fetchChats = asyncHandler(async (req, res) => {
   try {
-    Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
+    Chat.find({
+      users: { $elemMatch: { $eq: req.user._id } },
+      archivedBy: { $ne: req.user._id },
+      deletedBy: { $ne: req.user._id },
+    })
       .populate("users", "-password")
       .populate("groupAdmin", "-password")
       .populate("latestMessage")
@@ -193,11 +207,104 @@ const addToGroup = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Archive chat for current user
+// @route   PUT /api/chat/archive
+// @access  Protected
+const archiveChat = asyncHandler(async (req, res) => {
+  const { chatId } = req.body;
+  const userId = req.user._id;
+  const chat = await Chat.findByIdAndUpdate(
+    chatId,
+    { $addToSet: { archivedBy: userId } },
+    { new: true }
+  );
+  if (!chat) {
+    res.status(404);
+    throw new Error("Chat Not Found");
+  } else {
+    res.json(chat);
+  }
+});
+
+// @desc    Unarchive chat for current user
+// @route   PUT /api/chat/unarchive
+// @access  Protected
+const unarchiveChat = asyncHandler(async (req, res) => {
+  const { chatId } = req.body;
+  const userId = req.user._id;
+  const chat = await Chat.findByIdAndUpdate(
+    chatId,
+    { $pull: { archivedBy: userId } },
+    { new: true }
+  );
+  if (!chat) {
+    res.status(404);
+    throw new Error("Chat Not Found");
+  } else {
+    res.json(chat);
+  }
+});
+
+// @desc    Fetch archived chats for a user
+// @route   GET /api/chat/archived
+// @access  Protected
+const fetchArchivedChats = asyncHandler(async (req, res) => {
+  try {
+    Chat.find({
+      users: { $elemMatch: { $eq: req.user._id } },
+      archivedBy: req.user._id,
+      deletedBy: { $ne: req.user._id },
+    })
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password")
+      .populate("latestMessage")
+      .sort({ updatedAt: -1 })
+      .then(async (results) => {
+        results = await User.populate(results, {
+          path: "latestMessage.sender",
+          select: "name pic email",
+        });
+        res.status(200).send(results);
+      });
+  } catch (error) {
+    res.status(400);
+    throw new Error(error.message);
+  }
+});
+
+// @desc    Delete chat for current user (delete for me)
+// @route   PUT /api/chat/deleteforme
+// @access  Protected
+const deleteChatForMe = asyncHandler(async (req, res) => {
+  const { chatId } = req.body;
+  const userId = req.user._id;
+  const chat = await Chat.findByIdAndUpdate(
+    chatId,
+    { $addToSet: { deletedBy: userId } },
+    { new: true }
+  );
+  // Mark all messages in this chat as deleted for this user
+  await Message.updateMany(
+    { chat: chatId },
+    { $addToSet: { deletedBy: userId } }
+  );
+  if (!chat) {
+    res.status(404);
+    throw new Error("Chat Not Found");
+  } else {
+    res.json(chat);
+  }
+});
+
 module.exports = {
   accessChat,
   fetchChats,
+  fetchArchivedChats,
   createGroupChat,
   renameGroup,
   addToGroup,
   removeFromGroup,
+  archiveChat,
+  unarchiveChat,
+  deleteChatForMe,
 };

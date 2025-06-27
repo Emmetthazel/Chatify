@@ -10,6 +10,7 @@ import {
 import { ChatState } from "../Context/ChatProvider";
 import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
+import { useRef, useEffect, useState } from "react";
 
 const formatTime = (dateString) => {
   if (!dateString) return "";
@@ -49,112 +50,227 @@ const ScrollableChat = ({ messages, isGroupChat, users }) => {
     return COLORS[idx % COLORS.length] || '#888';
   };
 
-  let lastDate = null;
+  // Sticky date header logic
+  const containerRef = useRef(null);
+  const messageRefs = useRef([]);
+  const [currentDate, setCurrentDate] = useState(messages.length > 0 ? formatDate(messages[messages.length - 1].createdAt) : "");
+
+  useEffect(() => {
+    messageRefs.current = messageRefs.current.slice(0, messages.length);
+  }, [messages]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const containerTop = containerRef.current.getBoundingClientRect().top;
+      let topMsgIdx = 0;
+      for (let i = 0; i < messageRefs.current.length; i++) {
+        const ref = messageRefs.current[i];
+        if (ref) {
+          const rect = ref.getBoundingClientRect();
+          if (rect.top - containerTop >= -10) { // -10 for some tolerance
+            topMsgIdx = i;
+            break;
+          }
+        }
+      }
+      setCurrentDate(formatDate(messages[topMsgIdx]?.createdAt));
+    };
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+    }
+    // Initial call
+    handleScroll();
+    return () => {
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [messages]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   return (
-    <ScrollableFeed>
-      {messages &&
-        messages.map((m, i) => (
-          <div key={m._id}>
-            <div style={{ display: "flex" }}>
-              {(isSameSender(messages, m, i, user._id) ||
-                isLastMessage(messages, i, user._id)) && (
-                <Tooltip label={m.sender.name} placement="bottom-start" hasArrow>
-                  <Avatar
-                    mt="7px"
-                    mr={1}
-                    size="sm"
-                    cursor="pointer"
-                    name={m.sender.name}
-                    src={m.sender.pic}
-                  />
-                </Tooltip>
-              )}
-              <span
-                style={{
-                  backgroundColor: `${
-                    m.sender._id === user._id ? "#BEE3F8" : "#B9F5D0"
-                  }`,
-                  marginLeft: isSameSenderMargin(messages, m, i, user._id),
-                  marginTop: isSameUser(messages, m, i, user._id) ? 3 : 10,
-                  borderRadius: "20px",
-                  padding: "5px 15px",
-                  maxWidth: "75%",
-                  position: "relative",
-                  display: "inline-block",
-                  wordBreak: 'break-word',
-                }}
-              >
-                {isGroupChat && m.sender._id !== user._id && (
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      color: getUserColor(m.sender._id),
-                      fontSize: '0.85em',
-                      position: 'absolute',
-                      top: 6,
-                      left: 12,
-                      zIndex: 2,
-                      opacity: 0.95,
-                    }}
-                  >
-                    {m.sender.name}
-                  </span>
+    <div style={{ position: 'relative', height: '100%' }}>
+      {/* Sticky floating date header */}
+      {currentDate && (
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          background: 'rgba(255,255,255,0.85)',
+          textAlign: 'center',
+          fontWeight: 500,
+          color: '#555',
+          borderRadius: 12,
+          padding: '2px 12px',
+          fontSize: '0.98em',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+          margin: '0 auto 8px auto',
+          width: 'fit-content',
+        }}>
+          {currentDate}
+        </div>
+      )}
+      <ScrollableFeed>
+        <div ref={containerRef} style={{ height: '100%', overflowY: 'auto' }}>
+          {messages && messages.map((m, i) => {
+            const showDaySeparator =
+              i === 0 || !isSameDay(messages[i - 1].createdAt, m.createdAt);
+            return (
+              <div key={m._id} ref={el => messageRefs.current[i] = el}>
+                {showDaySeparator && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    margin: '12px 0',
+                  }}>
+                    <span style={{
+                      fontWeight: 500,
+                      color: '#555',
+                      background: 'rgba(255,255,255,0.7)',
+                      display: 'inline-block',
+                      borderRadius: 12,
+                      padding: '2px 12px',
+                      fontSize: '0.98em',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                      minWidth: 0,
+                      width: 'auto',
+                      maxWidth: '100%',
+                      textAlign: 'center',
+                    }}>
+                      {formatDate(m.createdAt)}
+                    </span>
+                  </div>
                 )}
-                <span style={{ display: 'block', paddingTop: isGroupChat && m.sender._id !== user._id ? 18 : 0 }}>
-                  {/^(https?:\/\/.*\.(mp3|wav|ogg|webm))$/i.test(m.content) ? (
-                    <AudioPlayer
-                      src={m.content}
-                      style={{
-                        borderRadius: '16px',
-                        background: 'transparent',
-                        boxShadow: 'none',
-                        width: '220px',
-                        minWidth: '160px',
-                        margin: '0 auto',
-                        padding: '0',
-                      }}
-                      showJumpControls={false}
-                      customAdditionalControls={[]}
-                      customVolumeControls={[]}
-                      customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR']}
-                      layout="horizontal-reverse"
-                    />
-                  ) :
-                  (/^(https?:\/\/.*\.(jpg|jpeg|png|gif))$/i.test(m.content) ? (
-                    <a href={m.content} target="_blank" rel="noopener noreferrer">
-                      <img
-                        src={m.content}
-                        alt="chat-img"
-                        style={{
-                          maxWidth: '220px',
-                          maxHeight: '220px',
-                          borderRadius: '12px',
-                          marginBottom: 4,
-                          display: 'block',
-                        }}
+                <div style={{ display: "flex" }}>
+                  {(isSameSender(messages, m, i, user._id) ||
+                    isLastMessage(messages, i, user._id)) && (
+                    <Tooltip label={m.sender.name} placement="bottom-start" hasArrow>
+                      <Avatar
+                        mt="7px"
+                        mr={1}
+                        size="sm"
+                        cursor="pointer"
+                        name={m.sender.name}
+                        src={m.sender.pic}
                       />
-                    </a>
-                  ) : (
-                    m.content
-                  ))}
+                    </Tooltip>
+                  )}
                   <span
                     style={{
-                      fontSize: "0.75em",
-                      color: "#555",
-                      marginLeft: 8,
-                      float: "right",
-                      opacity: 0.7,
+                      backgroundColor: `${
+                        m.sender._id === user._id ? "#BEE3F8" : "#B9F5D0"
+                      }`,
+                      marginLeft: isSameSenderMargin(messages, m, i, user._id),
+                      marginTop: isSameUser(messages, m, i, user._id) ? 3 : 10,
+                      borderRadius: "20px",
+                      padding: "5px 15px",
+                      maxWidth: "75%",
+                      position: "relative",
+                      display: "inline-block",
+                      wordBreak: 'break-word',
                     }}
                   >
-                    {formatTime(m.createdAt)}
+                    {isGroupChat && m.sender._id !== user._id && (
+                      <span
+                        style={{
+                          fontWeight: 600,
+                          color: getUserColor(m.sender._id),
+                          fontSize: '0.85em',
+                          position: 'absolute',
+                          top: 6,
+                          left: 12,
+                          zIndex: 2,
+                          opacity: 0.95,
+                        }}
+                      >
+                        {m.sender.name}
+                      </span>
+                    )}
+                    <span style={{ display: 'block', paddingTop: isGroupChat && m.sender._id !== user._id ? 18 : 0 }}>
+                      {m.attachment ? (
+                        /\.(jpg|jpeg|png|gif)$/i.test(m.attachment) ? (
+                          <a href={m.attachment} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={m.attachment}
+                              alt="chat-img"
+                              style={{
+                                maxWidth: '220px',
+                                maxHeight: '220px',
+                                borderRadius: '12px',
+                                marginBottom: 4,
+                                display: 'block',
+                              }}
+                            />
+                          </a>
+                        ) : (
+                          <a href={m.attachment} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span role="img" aria-label="attachment">📎</span>
+                            {m.attachment.split('/').pop()}
+                          </a>
+                        )
+                      ) : /^(https?:\/\/.*\.(mp3|wav|ogg|webm))$/i.test(m.content) ? (
+                        <AudioPlayer
+                          src={m.content}
+                          style={{
+                            borderRadius: '16px',
+                            background: 'transparent',
+                            boxShadow: 'none',
+                            width: '220px',
+                            minWidth: '160px',
+                            margin: '0 auto',
+                            padding: '0',
+                          }}
+                          showJumpControls={false}
+                          customAdditionalControls={[]}
+                          customVolumeControls={[]}
+                          customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR']}
+                          layout="horizontal-reverse"
+                        />
+                      ) : /^(https?:\/\/.*\.(jpg|jpeg|png|gif))$/i.test(m.content) ? (
+                        <a href={m.content} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={m.content}
+                            alt="chat-img"
+                            style={{
+                              maxWidth: '220px',
+                              maxHeight: '220px',
+                              borderRadius: '12px',
+                              marginBottom: 4,
+                              display: 'block',
+                            }}
+                          />
+                        </a>
+                      ) : (
+                        m.content
+                      )}
+                      <span
+                        style={{
+                          fontSize: "0.75em",
+                          color: "#555",
+                          marginLeft: 8,
+                          float: "right",
+                          opacity: 0.7,
+                        }}
+                      >
+                        {formatTime(m.createdAt)}
+                      </span>
+                    </span>
                   </span>
-                </span>
-              </span>
-            </div>
-          </div>
-        ))}
-    </ScrollableFeed>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </ScrollableFeed>
+    </div>
   );
 };
 
