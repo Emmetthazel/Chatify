@@ -108,7 +108,7 @@ const ScrollableChat = ({ messages, isGroupChat, users }) => {
           textAlign: 'center',
           fontWeight: 500,
           color: '#555',
-          borderRadius: 12,
+          borderRadius: 8,
           padding: '2px 12px',
           fontSize: '0.98em',
           boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
@@ -170,12 +170,13 @@ const ScrollableChat = ({ messages, isGroupChat, users }) => {
                       }`,
                       marginLeft: isSameSenderMargin(messages, m, i, user._id),
                       marginTop: isSameUser(messages, m, i, user._id) ? 3 : 10,
-                      borderRadius: "20px",
-                      padding: "5px 15px",
+                      borderRadius: /\.(jpg|jpeg|png|gif|mp4|mov|avi|mkv)$/i.test(m.attachment || m.content) ? '6px' : '9px',
+                      padding: /\.(jpg|jpeg|png|gif|mp4|mov|avi|mkv)$/i.test(m.attachment || m.content) ? '2px 2px' : '5px 10px',
                       maxWidth: "75%",
                       position: "relative",
                       display: "inline-block",
                       wordBreak: 'break-word',
+                      marginBottom: /\.(jpg|jpeg|png|gif|mp4|mov|avi|mkv)$/i.test(m.attachment || m.content) ? '2px' : undefined,
                     }}
                   >
                     {isGroupChat && m.sender._id !== user._id && (
@@ -197,22 +198,154 @@ const ScrollableChat = ({ messages, isGroupChat, users }) => {
                     <span style={{ display: 'block', paddingTop: isGroupChat && m.sender._id !== user._id ? 18 : 0 }}>
                       {m.attachment ? (
                         /\.(jpg|jpeg|png|gif)$/i.test(m.attachment) ? (
-                          <a href={m.attachment} target="_blank" rel="noopener noreferrer">
-                            <img
+                          <div style={{ position: 'relative', display: 'inline-block' }}>
+                            <a href={m.attachment} target="_blank" rel="noopener noreferrer">
+                              <img
+                                src={m.attachment}
+                                alt="chat-img"
+                                style={{
+                                  maxWidth: '220px',
+                                  maxHeight: '220px',
+                                  borderRadius: '9px',
+                                  marginBottom: 4,
+                                  display: 'block',
+                                }}
+                              />
+                            </a>
+                            <span
+                              style={{
+                                position: 'absolute',
+                                bottom: 6,
+                                right: 10,
+                                fontSize: '0.75em',
+                                color: '#fff',
+                                background: 'rgba(0,0,0,0.35)',
+                                borderRadius: 8,
+                                padding: '0px 5px',
+                                zIndex: 2,
+                                fontWeight: 400,
+                                letterSpacing: 0.2,
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                              }}
+                            >
+                              {formatTime(m.createdAt)}
+                            </span>
+                          </div>
+                        ) : /\.(mp3|wav|ogg|webm)$/i.test(m.attachment) ? (
+                          <div style={{ position: 'relative', display: 'inline-block', maxWidth: '220px', paddingRight: 60, minHeight: 40 }}>
+                            <AudioPlayer
                               src={m.attachment}
+                              style={{
+                                background: 'transparent',
+                                boxShadow: 'none',
+                                width: '220px',
+                                minWidth: '160px',
+                                margin: '0 auto',
+                                padding: '0',
+                              }}
+                              showJumpControls={false}
+                              customAdditionalControls={[]}
+                              customVolumeControls={[]}
+                              customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR']}
+                              layout="horizontal-reverse"
+                            />
+                            <span
+                              style={{
+                                position: 'absolute',
+                                bottom: 4,
+                                right: 10,
+                                fontSize: '0.75em',
+                                color: '#fff',
+                                background: 'rgba(0,0,0,0.35)',
+                                borderRadius: 8,
+                                padding: '0px 5px',
+                                zIndex: 2,
+                                fontWeight: 400,
+                                letterSpacing: 0.2,
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                                pointerEvents: 'none',
+                              }}
+                            >
+                              {formatTime(m.createdAt)}
+                            </span>
+                          </div>
+                        ) : /\.(mp4|mov|avi|mkv)$/i.test(m.attachment) ? (
+                          <div style={{ position: 'relative', display: 'inline-block' }}>
+                            <video
+                              src={m.attachment}
+                              controls
+                              style={{
+                                maxWidth: '220px',
+                                maxHeight: '220px',
+                                borderRadius: '9px',
+                                marginBottom: 0,
+                                display: 'block',
+                                background: '#000',
+                              }}
+                            />
+                            <span
+                              style={{
+                                position: 'absolute',
+                                bottom: 6,
+                                right: 10,
+                                fontSize: '0.75em',
+                                color: '#fff',
+                                background: 'rgba(0,0,0,0.35)',
+                                borderRadius: 8,
+                                padding: '0px 5px',
+                                zIndex: 2,
+                                fontWeight: 400,
+                                letterSpacing: 0.2,
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                              }}
+                            >
+                              {formatTime(m.createdAt)}
+                            </span>
+                          </div>
+                        ) : (
+                          <a href={m.attachment} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span role="img" aria-label="attachment">📎</span>
+                            {m.attachment.split('/').pop()}
+                          </a>
+                        )
+                      ) : /^(https?:\/\/.*\.(jpg|jpeg|png|gif))$/i.test(m.content) ? (
+                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                          <a href={m.content} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={m.content}
                               alt="chat-img"
                               style={{
                                 maxWidth: '220px',
                                 maxHeight: '220px',
-                                borderRadius: '12px',
+                                borderRadius: '9px',
                                 marginBottom: 4,
                                 display: 'block',
                               }}
                             />
                           </a>
-                        ) : /\.(mp3|wav|ogg|webm)$/i.test(m.attachment) ? (
+                          <span
+                            style={{
+                              position: 'absolute',
+                              bottom: 6,
+                              right: 10,
+                              fontSize: '0.75em',
+                              color: '#fff',
+                              background: 'rgba(0,0,0,0.35)',
+                              borderRadius: 8,
+                              padding: '0px 5px',
+                              zIndex: 2,
+                              fontWeight: 400,
+                              letterSpacing: 0.2,
+                              boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                            }}
+                          >
+                            {formatTime(m.createdAt)}
+                          </span>
+                        </div>
+                      ) : /^(https?:\/\/.*\.(mp3|wav|ogg|webm))$/i.test(m.content) ? (
+                        <div style={{ position: 'relative', display: 'inline-block', maxWidth: '220px', paddingRight: 60, minHeight: 50 }}>
                           <AudioPlayer
-                            src={m.attachment}
+                            src={m.content}
                             style={{
                               background: 'transparent',
                               boxShadow: 'none',
@@ -227,83 +360,77 @@ const ScrollableChat = ({ messages, isGroupChat, users }) => {
                             customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR']}
                             layout="horizontal-reverse"
                           />
-                        ) : /\.(mp4|mov|avi|mkv)$/i.test(m.attachment) ? (
+                          <span
+                            style={{
+                              position: 'absolute',
+                              bottom: 4,
+                              right: 10,
+                              fontSize: '0.75em',
+                              color: '#fff',
+                              background: 'rgba(0,0,0,0.35)',
+                              borderRadius: 8,
+                              padding: '0px 5px',
+                              zIndex: 2,
+                              fontWeight: 400,
+                              letterSpacing: 0.2,
+                              boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                              pointerEvents: 'none',
+                            }}
+                          >
+                            {formatTime(m.createdAt)}
+                          </span>
+                        </div>
+                      ) : /^(https?:\/\/.*\.(mp4|mov|avi|mkv))$/i.test(m.content) ? (
+                        <div style={{ position: 'relative', display: 'inline-block' }}>
                           <video
-                            src={m.attachment}
+                            src={m.content}
                             controls
                             style={{
                               maxWidth: '220px',
                               maxHeight: '220px',
-                              borderRadius: '12px',
-                              marginBottom: 4,
+                              borderRadius: '9px',
+                              marginBottom: 0,
                               display: 'block',
                               background: '#000',
                             }}
                           />
-                        ) : (
-                          <a href={m.attachment} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span role="img" aria-label="attachment">📎</span>
-                            {m.attachment.split('/').pop()}
-                          </a>
-                        )
-                      ) : /^(https?:\/\/.*\.(jpg|jpeg|png|gif))$/i.test(m.content) ? (
-                        <a href={m.content} target="_blank" rel="noopener noreferrer">
-                          <img
-                            src={m.content}
-                            alt="chat-img"
+                          <span
                             style={{
-                              maxWidth: '220px',
-                              maxHeight: '220px',
-                              borderRadius: '12px',
-                              marginBottom: 4,
-                              display: 'block',
+                              position: 'absolute',
+                              bottom: 6,
+                              right: 10,
+                              fontSize: '0.75em',
+                              color: '#fff',
+                              background: 'rgba(0,0,0,0.35)',
+                              borderRadius: 8,
+                              padding: '0px 5px',
+                              zIndex: 2,
+                              fontWeight: 400,
+                              letterSpacing: 0.2,
+                              boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
                             }}
-                          />
-                        </a>
-                      ) : /^(https?:\/\/.*\.(mp3|wav|ogg|webm))$/i.test(m.content) ? (
-                        <AudioPlayer
-                          src={m.content}
-                          style={{
-                            background: 'transparent',
-                            boxShadow: 'none',
-                            width: '220px',
-                            minWidth: '160px',
-                            margin: '0 auto',
-                            padding: '0',
-                          }}
-                          showJumpControls={false}
-                          customAdditionalControls={[]}
-                          customVolumeControls={[]}
-                          customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR']}
-                          layout="horizontal-reverse"
-                        />
-                      ) : /^(https?:\/\/.*\.(mp4|mov|avi|mkv))$/i.test(m.content) ? (
-                        <video
-                          src={m.content}
-                          controls
-                          style={{
-                            maxWidth: '220px',
-                            maxHeight: '220px',
-                            borderRadius: '12px',
-                            marginBottom: 4,
-                            display: 'block',
-                            background: '#000',
-                          }}
-                        />
+                          >
+                            {formatTime(m.createdAt)}
+                          </span>
+                        </div>
                       ) : (
-                        m.content
+                        <>
+                          {m.content}
+                          <span
+                            style={{
+                              fontSize: '0.75em',
+                              color: '#555',
+                              marginLeft: 8,
+                              fontWeight: 400,
+                              letterSpacing: 0.2,
+                              opacity: 0.7,
+                              padding: '0px 5px',
+                            }}
+                          >
+                            {formatTime(m.createdAt)}
+                          </span>
+                        </>
                       )}
-                      <span
-                        style={{
-                          fontSize: "0.75em",
-                          color: "#555",
-                          marginLeft: 8,
-                          float: "right",
-                          opacity: 0.7,
-                        }}
-                      >
-                        {formatTime(m.createdAt)}
-                      </span>
                     </span>
                   </span>
                 </div>
