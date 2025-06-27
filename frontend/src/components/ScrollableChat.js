@@ -210,30 +210,42 @@ const ScrollableChat = ({ messages, isGroupChat, users }) => {
                               }}
                             />
                           </a>
+                        ) : /\.(mp3|wav|ogg|webm)$/i.test(m.attachment) ? (
+                          <AudioPlayer
+                            src={m.attachment}
+                            style={{
+                              background: 'transparent',
+                              boxShadow: 'none',
+                              width: '220px',
+                              minWidth: '160px',
+                              margin: '0 auto',
+                              padding: '0',
+                            }}
+                            showJumpControls={false}
+                            customAdditionalControls={[]}
+                            customVolumeControls={[]}
+                            customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR']}
+                            layout="horizontal-reverse"
+                          />
+                        ) : /\.(mp4|mov|avi|mkv)$/i.test(m.attachment) ? (
+                          <video
+                            src={m.attachment}
+                            controls
+                            style={{
+                              maxWidth: '220px',
+                              maxHeight: '220px',
+                              borderRadius: '12px',
+                              marginBottom: 4,
+                              display: 'block',
+                              background: '#000',
+                            }}
+                          />
                         ) : (
                           <a href={m.attachment} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span role="img" aria-label="attachment">📎</span>
                             {m.attachment.split('/').pop()}
                           </a>
                         )
-                      ) : /^(https?:\/\/.*\.(mp3|wav|ogg|webm))$/i.test(m.content) ? (
-                        <AudioPlayer
-                          src={m.content}
-                          style={{
-                            borderRadius: '16px',
-                            background: 'transparent',
-                            boxShadow: 'none',
-                            width: '220px',
-                            minWidth: '160px',
-                            margin: '0 auto',
-                            padding: '0',
-                          }}
-                          showJumpControls={false}
-                          customAdditionalControls={[]}
-                          customVolumeControls={[]}
-                          customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR']}
-                          layout="horizontal-reverse"
-                        />
                       ) : /^(https?:\/\/.*\.(jpg|jpeg|png|gif))$/i.test(m.content) ? (
                         <a href={m.content} target="_blank" rel="noopener noreferrer">
                           <img
@@ -248,6 +260,36 @@ const ScrollableChat = ({ messages, isGroupChat, users }) => {
                             }}
                           />
                         </a>
+                      ) : /^(https?:\/\/.*\.(mp3|wav|ogg|webm))$/i.test(m.content) ? (
+                        <AudioPlayer
+                          src={m.content}
+                          style={{
+                            background: 'transparent',
+                            boxShadow: 'none',
+                            width: '220px',
+                            minWidth: '160px',
+                            margin: '0 auto',
+                            padding: '0',
+                          }}
+                          showJumpControls={false}
+                          customAdditionalControls={[]}
+                          customVolumeControls={[]}
+                          customProgressBarSection={['CURRENT_TIME', 'PROGRESS_BAR']}
+                          layout="horizontal-reverse"
+                        />
+                      ) : /^(https?:\/\/.*\.(mp4|mov|avi|mkv))$/i.test(m.content) ? (
+                        <video
+                          src={m.content}
+                          controls
+                          style={{
+                            maxWidth: '220px',
+                            maxHeight: '220px',
+                            borderRadius: '12px',
+                            marginBottom: 4,
+                            display: 'block',
+                            background: '#000',
+                          }}
+                        />
                       ) : (
                         m.content
                       )}

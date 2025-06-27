@@ -4,7 +4,7 @@ import { Box, Text } from "@chakra-ui/layout";
 import "./styles.css";
 import { IconButton, Spinner, useToast } from "@chakra-ui/react";
 import { getSender, getSenderFull } from "../config/ChatLogics";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { ArrowBackIcon, AttachmentIcon } from "@chakra-ui/icons";
 import ProfileModal from "./miscellaneous/ProfileModal";
@@ -36,6 +36,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [audioLoading, setAudioLoading] = useState(false);
   const [docLoading, setDocLoading] = useState(false);
   const [docFile, setDocFile] = useState(null);
+  const [videoLoading, setVideoLoading] = useState(false);
   const toast = useToast();
 
   const defaultOptions = {
@@ -386,6 +387,69 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     setDocLoading(false);
   };
 
+  // Video upload handler
+  const handleVideoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setVideoLoading(true);
+    const data = new FormData();
+    data.append("file", file);
+    data.append("upload_preset", "chat-app");
+    data.append("cloud_name", "piyushproj");
+    try {
+      const res = await fetch("https://api.cloudinary.com/v1_1/piyushproj/video/upload", {
+        method: "post",
+        body: data,
+      });
+      const videoData = await res.json();
+      if (videoData.url) {
+        await sendVideoMessage(videoData.url);
+      } else {
+        throw new Error("Upload failed");
+      }
+    } catch (err) {
+      toast({
+        title: "Error uploading video",
+        description: err.message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "bottom",
+      });
+    }
+    setVideoLoading(false);
+  };
+
+  const sendVideoMessage = async (videoUrl) => {
+    try {
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+      const { data } = await axios.post(
+        "/api/message",
+        {
+          content: videoUrl,
+          chatId: selectedChat,
+        },
+        config
+      );
+      socket.emit("new message", data);
+      setMessages([...messages, data]);
+    } catch (error) {
+      toast({
+        title: "Error Occured!",
+        description: "Failed to send the video",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+    }
+  };
+
   // Helper to format the date for the top separator
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -566,6 +630,20 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                   />
                 </label>
               </span>
+              {/* Video upload button */}
+              <span style={{ position: 'absolute', left: 115, top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}>
+                <label htmlFor="chat-video-upload" style={{ cursor: 'pointer', margin: 0 }}>
+                  <i className="fas fa-video" style={{ fontSize: 20, color: "#555" }} />
+                  <input
+                    id="chat-video-upload"
+                    type="file"
+                    accept="video/*"
+                    style={{ display: 'none' }}
+                    onChange={handleVideoUpload}
+                    disabled={videoLoading}
+                  />
+                </label>
+              </span>
               {showEmojiPicker && (
                 <div style={{ position: 'absolute', bottom: '60px', left: 0, zIndex: 10 }}>
                   <Picker data={data} onEmojiSelect={addEmoji} theme="dark" />
@@ -574,11 +652,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               <Input
                 variant="filled"
                 bg="#E0E0E0"
-                placeholder={docLoading ? "Uploading document..." : imageLoading ? "Uploading image..." : audioLoading ? "Uploading audio..." : "Type a message"}
+                placeholder={docLoading ? "Uploading document..." : imageLoading ? "Uploading image..." : audioLoading ? "Uploading audio..." : videoLoading ? "Uploading video..." : "Type a message"}
                 value={newMessage}
                 onChange={typingHandler}
-                style={{ paddingLeft: 120, paddingRight: 50 }}
-                disabled={imageLoading || audioLoading || docLoading}
+                style={{ paddingLeft: 160, paddingRight: 50 }}
+                disabled={imageLoading || audioLoading || docLoading || videoLoading}
               />
               {/* Audio record button on the right */}
               <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}>
@@ -611,7 +689,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                       padding: 0,
                     }}
                     aria-label="Record audio"
-                    disabled={audioLoading || imageLoading || docLoading}
+                    disabled={audioLoading || imageLoading || docLoading || videoLoading}
                   >
                     <FaMicrophone />
                   </button>
