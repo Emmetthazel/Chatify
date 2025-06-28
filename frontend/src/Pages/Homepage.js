@@ -53,7 +53,7 @@ function Homepage() {
             bgClip="text"
             letterSpacing="wide"
           >
-            Chatify
+            Luma
           </Text>
         </HStack>
       </Box>

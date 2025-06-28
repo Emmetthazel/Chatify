@@ -180,7 +180,7 @@ function SideDrawer() {
             bgClip="text"
             letterSpacing="wide"
           >
-            Chatify
+            Luma
           </Text>
         </HStack>
         <div>

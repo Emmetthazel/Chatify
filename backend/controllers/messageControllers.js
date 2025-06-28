@@ -95,6 +95,20 @@ const deleteMessage = asyncHandler(async (req, res) => {
       throw new Error("Message not found");
     }
 
+    // Check if user is part of the chat
+    const chat = await Chat.findById(message.chat);
+    if (!chat) {
+      res.status(404);
+      throw new Error("Chat not found");
+    }
+
+    // Check if user is a member of the chat
+    const isMember = chat.users.some(user => user.toString() === userId.toString());
+    if (!isMember) {
+      res.status(403);
+      throw new Error("You can only delete messages from chats you're a member of");
+    }
+
     // Add user to deletedBy array
     await Message.findByIdAndUpdate(
       messageId,

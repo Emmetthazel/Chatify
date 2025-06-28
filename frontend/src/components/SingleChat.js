@@ -746,9 +746,42 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       ) : (
         // to get socket.io on same page
         <Box d="flex" alignItems="center" justifyContent="center" h="100%">
-          <Text fontSize="3xl" pb={3} fontFamily="Work sans">
-            Click on a user to start chatting
-          </Text>
+          <Box
+            textAlign="center"
+            p={8}
+            borderRadius="xl"
+            bg="white"
+            boxShadow="0 4px 20px rgba(0,0,0,0.08)"
+            maxW="400px"
+            mx="auto"
+          >
+            <Text
+              fontSize="4xl"
+              mb={3}
+              display="block"
+              filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
+            >
+              👋
+            </Text>
+            <Text
+              fontSize="2xl"
+              fontWeight="bold"
+              mb={2}
+              bgGradient="linear(to-r, teal.400, blue.500)"
+              bgClip="text"
+              fontFamily="Work sans"
+            >
+              Welcome to Luma!
+            </Text>
+            <Text
+              fontSize="md"
+              color="gray.600"
+              fontFamily="Work sans"
+              lineHeight="1.6"
+            >
+              Click a user from the left to start your conversation.
+            </Text>
+          </Box>
         </Box>
       )}
     </>

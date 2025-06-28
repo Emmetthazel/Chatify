@@ -188,32 +188,30 @@ const ScrollableChat = ({ messages, isGroupChat, users, deleteMessage, user }) =
                       marginBottom: /\.(jpg|jpeg|png|gif|mp4|mov|avi|mkv)$/i.test(m.attachment || m.content) ? '2px' : undefined,
                     }}
                   >
-                    {/* Delete button for own messages */}
-                    {isOwnMessage && (
-                      <IconButton
-                        icon={<DeleteIcon />}
-                        size="xs"
-                        colorScheme="red"
-                        variant="ghost"
-                        position="absolute"
-                        top={-1}
-                        right={-0.3}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteMessage(m._id);
-                        }}
-                        opacity={0.3}
-                        _hover={{ 
-                          opacity: 1,
-                          bg: "red.100",
-                          transform: "scale(1.1)"
-                        }}
-                        transition="all 0.2s"
-                        zIndex={3}
-                        aria-label="Delete message"
-                        title="Delete message"
-                      />
-                    )}
+                    {/* Delete button for all messages */}
+                    <IconButton
+                      icon={<DeleteIcon />}
+                      size="xs"
+                      colorScheme="red"
+                      variant="ghost"
+                      position="absolute"
+                      top={-1}
+                      right={-0.3}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteMessage(m._id);
+                      }}
+                      opacity={0.3}
+                      _hover={{ 
+                        opacity: 1,
+                        bg: "red.100",
+                        transform: "scale(1.1)"
+                      }}
+                      transition="all 0.2s"
+                      zIndex={3}
+                      aria-label="Delete message"
+                      title="Delete message"
+                    />
                     {isGroupChat && m.sender._id !== user._id && (
                       <span
                         style={{

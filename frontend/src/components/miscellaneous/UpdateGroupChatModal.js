@@ -66,6 +66,17 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
   const handleRename = async () => {
     if (!groupChatName) return;
 
+    if (selectedChat.groupAdmin._id !== user._id) {
+      toast({
+        title: "Only admins can rename the group!",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      return;
+    }
+
     try {
       setRenameLoading(true);
       const config = {
@@ -203,6 +214,8 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
     setGroupChatName("");
   };
 
+  const isAdmin = selectedChat.groupAdmin._id === user._id;
+
   return (
     <>
       <IconButton d={{ base: "flex" }} icon={<ViewIcon />} onClick={onOpen} />
@@ -227,34 +240,38 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
                   key={u._id}
                   user={u}
                   admin={selectedChat.groupAdmin}
-                  handleFunction={() => handleRemove(u)}
+                  handleFunction={isAdmin ? () => handleRemove(u) : undefined}
                 />
               ))}
             </Box>
-            <FormControl d="flex">
-              <Input
-                placeholder="Chat Name"
-                mb={3}
-                value={groupChatName}
-                onChange={(e) => setGroupChatName(e.target.value)}
-              />
-              <Button
-                variant="solid"
-                colorScheme="teal"
-                ml={1}
-                isLoading={renameloading}
-                onClick={handleRename}
-              >
-                Update
-              </Button>
-            </FormControl>
-            <FormControl>
-              <Input
-                placeholder="Add User to group"
-                mb={1}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
-            </FormControl>
+            {isAdmin && (
+              <FormControl d="flex">
+                <Input
+                  placeholder="Chat Name"
+                  mb={3}
+                  value={groupChatName}
+                  onChange={(e) => setGroupChatName(e.target.value)}
+                />
+                <Button
+                  variant="solid"
+                  colorScheme="teal"
+                  ml={1}
+                  isLoading={renameloading}
+                  onClick={handleRename}
+                >
+                  Update
+                </Button>
+              </FormControl>
+            )}
+            {isAdmin && (
+              <FormControl>
+                <Input
+                  placeholder="Add User to group"
+                  mb={1}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
+              </FormControl>
+            )}
 
             {loading ? (
               <Spinner size="lg" />

@@ -12,12 +12,12 @@ const UserBadgeItem = ({ user, handleFunction, admin }) => {
       variant="solid"
       fontSize={12}
       colorScheme="purple"
-      cursor="pointer"
+      cursor={handleFunction ? "pointer" : "default"}
       onClick={handleFunction}
     >
       {user.name}
       {admin === user._id && <span> (Admin)</span>}
-      <CloseIcon pl={1} />
+      {handleFunction && <CloseIcon pl={1} />}
     </Badge>
   );
 };
