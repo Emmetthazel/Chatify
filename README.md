@@ -1,6 +1,6 @@
-# Chatify
+# Luma
 
-Chatify is a Full Stack Chatting App.
+Luma is a Full Stack Chatting App.
 Uses Socket.io for real time communication and stores user details in encrypted format in Mongo DB Database.
 
 ## Tech Stack
@@ -16,13 +16,13 @@ Uses Socket.io for real time communication and stores user details in encrypted 
 Clone the project
 
 ```bash
-  git clone https://github.com/piyush-eon/Chatify
+  git clone https://github.com/piyush-eon/Luma
 ```
 
 Go to the project directory
 
 ```bash
-  cd Chatify
+  cd Luma
 ```
 
 Install dependencies
