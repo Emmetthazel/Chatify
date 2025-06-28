@@ -82,7 +82,7 @@ const authUser = asyncHandler(async (req, res) => {
   }
 });
 
-//@description     Update user profile picture
+//@description     Update user profile
 //@route           PUT /api/user/profile
 //@access          Private
 const updateProfile = asyncHandler(async (req, res) => {
@@ -91,8 +91,28 @@ const updateProfile = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("User not found");
   }
+
+  // Update profile picture
   if (req.body.pic) user.pic = req.body.pic;
-  // Add more fields if needed
+  
+  // Update name
+  if (req.body.name) user.name = req.body.name;
+  
+  // Update email (check if it's not already taken)
+  if (req.body.email) {
+    const emailExists = await User.findOne({ email: req.body.email, _id: { $ne: req.user._id } });
+    if (emailExists) {
+      res.status(400);
+      throw new Error("Email already exists");
+    }
+    user.email = req.body.email;
+  }
+  
+  // Update password
+  if (req.body.password) {
+    user.password = req.body.password;
+  }
+
   await user.save();
   res.json({
     _id: user._id,
