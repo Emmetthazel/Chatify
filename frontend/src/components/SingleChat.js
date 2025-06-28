@@ -33,6 +33,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [recording, setRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const [audioChunks, setAudioChunks] = useState([]);
+  const audioChunksRef = useRef([]);
   const [audioLoading, setAudioLoading] = useState(false);
   const [docLoading, setDocLoading] = useState(false);
   const [docFile, setDocFile] = useState(null);
@@ -82,35 +83,44 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   const sendMessage = async (event) => {
-    if (event.key === "Enter" && newMessage) {
-      socket.emit("stop typing", selectedChat._id);
-      try {
-        const config = {
-          headers: {
-            "Content-type": "application/json",
-            Authorization: `Bearer ${user.token}`,
-          },
-        };
-        setNewMessage("");
-        const { data } = await axios.post(
-          "/api/message",
-          {
-            content: newMessage,
-            chatId: selectedChat,
-          },
-          config
-        );
-        socket.emit("new message", data);
-        setMessages([...messages, data]);
-      } catch (error) {
-        toast({
-          title: "Error Occured!",
-          description: "Failed to send the Message",
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-          position: "bottom",
-        });
+    if (event.key === "Enter") {
+      // If recording, stop the recording first
+      if (recording && mediaRecorder) {
+        handleAudioStop();
+        return; // The audio will be sent via the onstop callback
+      }
+      
+      // If there's text message, send it
+      if (newMessage) {
+        socket.emit("stop typing", selectedChat._id);
+        try {
+          const config = {
+            headers: {
+              "Content-type": "application/json",
+              Authorization: `Bearer ${user.token}`,
+            },
+          };
+          setNewMessage("");
+          const { data } = await axios.post(
+            "/api/message",
+            {
+              content: newMessage,
+              chatId: selectedChat,
+            },
+            config
+          );
+          socket.emit("new message", data);
+          setMessages([...messages, data]);
+        } catch (error) {
+          toast({
+            title: "Error Occured!",
+            description: "Failed to send the Message",
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+            position: "bottom",
+          });
+        }
       }
     }
   };
@@ -305,15 +315,51 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       const recorder = new window.MediaRecorder(stream);
       setMediaRecorder(recorder);
       setAudioChunks([]);
+      audioChunksRef.current = [];
+      
       recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) setAudioChunks((prev) => [...prev, e.data]);
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+          setAudioChunks(prev => [...prev, e.data]);
+        }
       };
+      
       recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        await handleAudioUpload(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-        setRecording(false);
+        try {
+          // Use the ref to get the current audio chunks
+          const currentChunks = audioChunksRef.current;
+          if (currentChunks.length === 0) {
+            toast({
+              title: "No audio recorded",
+              status: "warning",
+              duration: 3000,
+              isClosable: true,
+              position: "bottom",
+            });
+            stream.getTracks().forEach(track => track.stop());
+            setRecording(false);
+            return;
+          }
+          
+          const audioBlob = new Blob(currentChunks, { type: 'audio/webm' });
+          await handleAudioUpload(audioBlob);
+        } catch (error) {
+          toast({
+            title: "Error processing audio",
+            description: error.message,
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+            position: "bottom",
+          });
+        } finally {
+          stream.getTracks().forEach(track => track.stop());
+          setRecording(false);
+          setAudioChunks([]);
+          audioChunksRef.current = [];
+        }
       };
+      
       recorder.start();
       setRecording(true);
     } catch (err) {
@@ -329,7 +375,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   const handleAudioStop = () => {
-    if (mediaRecorder && recording) {
+    if (mediaRecorder && recording && mediaRecorder.state === 'recording') {
       mediaRecorder.stop();
     }
   };
