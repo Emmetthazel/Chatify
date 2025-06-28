@@ -80,6 +80,7 @@ const MyChats = ({ fetchAgain }) => {
         position: "bottom-left",
       });
       fetchChats();
+      fetchArchivedChats();
     } catch (error) {
       toast({
         title: "Error archiving chat",

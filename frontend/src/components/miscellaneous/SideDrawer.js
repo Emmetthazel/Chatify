@@ -1,7 +1,7 @@
 import { Button } from "@chakra-ui/button";
 import { useDisclosure } from "@chakra-ui/hooks";
 import { Input } from "@chakra-ui/input";
-import { Box, Text } from "@chakra-ui/layout";
+import { Box, Text, HStack } from "@chakra-ui/layout";
 import {
   Menu,
   MenuButton,
@@ -17,7 +17,7 @@ import {
   DrawerOverlay,
 } from "@chakra-ui/modal";
 import { Tooltip } from "@chakra-ui/tooltip";
-import { BellIcon, ChevronDownIcon } from "@chakra-ui/icons";
+import { BellIcon, ChevronDownIcon, ChatIcon } from "@chakra-ui/icons";
 import { Avatar } from "@chakra-ui/avatar";
 import { useHistory } from "react-router-dom";
 import { useState } from "react";
@@ -31,6 +31,7 @@ import { Effect } from "react-notification-badge";
 import { getSender } from "../../config/ChatLogics";
 import UserListItem from "../userAvatar/UserListItem";
 import { ChatState } from "../../Context/ChatProvider";
+import { Icon } from "@chakra-ui/react";
 
 function SideDrawer() {
   const [search, setSearch] = useState("");
@@ -163,16 +164,25 @@ function SideDrawer() {
             </Text>
           </Button>
         </Tooltip>
-        <Text
-          fontSize="2xl"
-          fontFamily="Work sans"
-          fontWeight="bold"
-          bgGradient="linear(to-r, teal.400, blue.500)"
-          bgClip="text"
-          letterSpacing="wide"
-        >
-          Chatify
-        </Text>
+        <HStack spacing={2}>
+          <Icon
+            as={ChatIcon}
+            w={6}
+            h={6}
+            color="teal.400"
+            filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))"
+          />
+          <Text
+            fontSize="2xl"
+            fontFamily="Work sans"
+            fontWeight="bold"
+            bgGradient="linear(to-r, teal.400, blue.500)"
+            bgClip="text"
+            letterSpacing="wide"
+          >
+            Chatify
+          </Text>
+        </HStack>
         <div>
           <Menu>
             <MenuButton p={1}>

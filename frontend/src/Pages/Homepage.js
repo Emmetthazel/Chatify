@@ -7,7 +7,10 @@ import {
   TabPanels,
   Tabs,
   Text,
+  HStack,
+  Icon,
 } from "@chakra-ui/react";
+import { ChatIcon } from "@chakra-ui/icons";
 import { useEffect } from "react";
 import { useHistory } from "react-router";
 import Login from "../components/Authentication/Login";
@@ -34,16 +37,25 @@ function Homepage() {
         borderRadius="lg"
         borderWidth="1px"
       >
-        <Text
-          fontSize="4xl"
-          fontFamily="Work sans"
-          fontWeight="bold"
-          bgGradient="linear(to-r, teal.400, blue.500)"
-          bgClip="text"
-          letterSpacing="wide"
-        >
-          Chatify
-        </Text>
+        <HStack spacing={3}>
+          <Icon
+            as={ChatIcon}
+            w={8}
+            h={8}
+            color="teal.400"
+            filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
+          />
+          <Text
+            fontSize="4xl"
+            fontFamily="Work sans"
+            fontWeight="bold"
+            bgGradient="linear(to-r, teal.400, blue.500)"
+            bgClip="text"
+            letterSpacing="wide"
+          >
+            Chatify
+          </Text>
+        </HStack>
       </Box>
       <Box bg="white" w="100%" p={4} borderRadius="lg" borderWidth="1px">
         <Tabs isFitted variant="soft-rounded">
