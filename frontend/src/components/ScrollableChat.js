@@ -11,6 +11,8 @@ import { ChatState } from "../Context/ChatProvider";
 import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
 import { useRef, useEffect, useState } from "react";
+import { IconButton } from "@chakra-ui/react";
+import { DeleteIcon } from "@chakra-ui/icons";
 
 const formatTime = (dateString) => {
   if (!dateString) return "";
@@ -40,8 +42,8 @@ const isSameDay = (d1, d2) => {
   );
 };
 
-const ScrollableChat = ({ messages, isGroupChat, users }) => {
-  const { user } = ChatState();
+const ScrollableChat = ({ messages, isGroupChat, users, deleteMessage, user }) => {
+  const { user: contextUser } = ChatState();
 
   // Helper to get a color for a user
   const getUserColor = (userId) => {
@@ -96,6 +98,12 @@ const ScrollableChat = ({ messages, isGroupChat, users }) => {
     }
   }, [messages]);
 
+  const handleDeleteMessage = (messageId) => {
+    if (deleteMessage) {
+      deleteMessage(messageId);
+    }
+  };
+
   return (
     <div style={{ position: 'relative', height: '100%' }}>
       {/* Sticky floating date header */}
@@ -123,6 +131,7 @@ const ScrollableChat = ({ messages, isGroupChat, users }) => {
           {messages && messages.map((m, i) => {
             const showDaySeparator =
               i === 0 || !isSameDay(messages[i - 1].createdAt, m.createdAt);
+            const isOwnMessage = m.sender._id === user._id;
             return (
               <div key={m._id} ref={el => messageRefs.current[i] = el}>
                 {showDaySeparator && (
@@ -149,7 +158,7 @@ const ScrollableChat = ({ messages, isGroupChat, users }) => {
                     </span>
                   </div>
                 )}
-                <div style={{ display: "flex" }}>
+                <div style={{ display: "flex", position: "relative" }}>
                   {(isSameSender(messages, m, i, user._id) ||
                     isLastMessage(messages, i, user._id)) && (
                     <Tooltip label={m.sender.name} placement="bottom-start" hasArrow>
@@ -179,6 +188,32 @@ const ScrollableChat = ({ messages, isGroupChat, users }) => {
                       marginBottom: /\.(jpg|jpeg|png|gif|mp4|mov|avi|mkv)$/i.test(m.attachment || m.content) ? '2px' : undefined,
                     }}
                   >
+                    {/* Delete button for own messages */}
+                    {isOwnMessage && (
+                      <IconButton
+                        icon={<DeleteIcon />}
+                        size="xs"
+                        colorScheme="red"
+                        variant="ghost"
+                        position="absolute"
+                        top={-1}
+                        right={-0.3}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteMessage(m._id);
+                        }}
+                        opacity={0.3}
+                        _hover={{ 
+                          opacity: 1,
+                          bg: "red.100",
+                          transform: "scale(1.1)"
+                        }}
+                        transition="all 0.2s"
+                        zIndex={3}
+                        aria-label="Delete message"
+                        title="Delete message"
+                      />
+                    )}
                     {isGroupChat && m.sender._id !== user._id && (
                       <span
                         style={{

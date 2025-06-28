@@ -115,6 +115,45 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }
   };
 
+  const deleteMessage = async (messageId) => {
+    try {
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+      
+      await axios.put(
+        "/api/message/delete",
+        {
+          messageId: messageId,
+        },
+        config
+      );
+
+      // Remove the message from the local state
+      setMessages(messages.filter((msg) => msg._id !== messageId));
+
+      toast({
+        title: "Message deleted!",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "bottom",
+      });
+    } catch (error) {
+      toast({
+        title: "Error deleting message",
+        description: error.response?.data?.message || "Failed to delete message",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+    }
+  };
+
   useEffect(() => {
     socket = io(ENDPOINT);
     socket.emit("setup", user);
@@ -562,7 +601,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                     </span>
                   </div>
                 )}
-                <ScrollableChat messages={messages} isGroupChat={selectedChat.isGroupChat} users={selectedChat.users} />
+                <ScrollableChat 
+                  messages={messages} 
+                  isGroupChat={selectedChat.isGroupChat} 
+                  users={selectedChat.users}
+                  deleteMessage={deleteMessage}
+                  user={user}
+                />
               </div>
             )}
 

@@ -80,4 +80,33 @@ const sendMessage = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { allMessages, sendMessage, upload };
+//@description     Delete Message for current user
+//@route           PUT /api/Message/delete
+//@access          Protected
+const deleteMessage = asyncHandler(async (req, res) => {
+  const { messageId } = req.body;
+  const userId = req.user._id;
+
+  try {
+    const message = await Message.findById(messageId);
+    
+    if (!message) {
+      res.status(404);
+      throw new Error("Message not found");
+    }
+
+    // Add user to deletedBy array
+    await Message.findByIdAndUpdate(
+      messageId,
+      { $addToSet: { deletedBy: userId } },
+      { new: true }
+    );
+
+    res.json({ message: "Message deleted successfully" });
+  } catch (error) {
+    res.status(400);
+    throw new Error(error.message);
+  }
+});
+
+module.exports = { allMessages, sendMessage, deleteMessage, upload };
