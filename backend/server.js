@@ -90,4 +90,20 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("USER DISCONNECTED");
   });
+
+  socket.on('call-offer', (data) => {
+    io.to(data.to).emit('call-offer', data);
+  });
+  socket.on('call-answer', (data) => {
+    io.to(data.to).emit('call-answer', data);
+  });
+  socket.on('ice-candidate', (data) => {
+    io.to(data.to).emit('ice-candidate', data);
+  });
+  socket.on('call-reject', (data) => {
+    io.to(data.to).emit('call-reject', data);
+  });
+  socket.on('call-hangup', (data) => {
+    io.to(data.to).emit('call-hangup', data);
+  });
 });

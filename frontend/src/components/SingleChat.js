@@ -2,7 +2,7 @@ import { FormControl } from "@chakra-ui/form-control";
 import { Input } from "@chakra-ui/input";
 import { Box, Text } from "@chakra-ui/layout";
 import "./styles.css";
-import { IconButton, Spinner, useToast } from "@chakra-ui/react";
+import { IconButton, Spinner, useToast, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Avatar, Button } from "@chakra-ui/react";
 import { getSender, getSenderFull } from "../config/ChatLogics";
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
@@ -16,12 +16,12 @@ import data from '@emoji-mart/data';
 import io from "socket.io-client";
 import UpdateGroupChatModal from "./miscellaneous/UpdateGroupChatModal";
 import { ChatState } from "../Context/ChatProvider";
-import { Avatar } from "@chakra-ui/avatar";
-import { FaMicrophone, FaStop, FaFileAlt } from "react-icons/fa";
+import { FaMicrophone, FaStop, FaFileAlt, FaPhoneSlash, FaMicrophoneSlash, FaVideo, FaVideoSlash } from "react-icons/fa";
 const ENDPOINT = "http://localhost:5000"; // "https://talk-a-tive.herokuapp.com"; -> After deployment
 var socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
+  const { selectedChat, setSelectedChat, user, notification, setNotification } = ChatState();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
@@ -39,6 +39,20 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [docFile, setDocFile] = useState(null);
   const [videoLoading, setVideoLoading] = useState(false);
   const toast = useToast();
+  const [callType, setCallType] = useState(null); // 'audio' or 'video'
+  const [callModalOpen, setCallModalOpen] = useState(false);
+  const [incomingCall, setIncomingCall] = useState(null); // { from, type }
+  const [localStream, setLocalStream] = useState(null);
+  const [remoteStream, setRemoteStream] = useState(null);
+  const [peerConnection, setPeerConnection] = useState(null);
+  const localVideoRef = useRef();
+  const remoteVideoRef = useRef();
+  const localAudioRef = useRef();
+  const remoteAudioRef = useRef();
+  const [isMuted, setIsMuted] = useState(false);
+  const [isCameraOff, setIsCameraOff] = useState(false);
+  const peerName = (selectedChat && selectedChat.users && selectedChat.users.find(u => u._id !== user._id)?.name) || "Contact";
+  const peerAvatar = (selectedChat && selectedChat.users && selectedChat.users.find(u => u._id !== user._id)?.pic) || undefined;
 
   const defaultOptions = {
     loop: true,
@@ -48,7 +62,24 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       preserveAspectRatio: "xMidYMid slice",
     },
   };
-  const { selectedChat, setSelectedChat, user, notification, setNotification } = ChatState();
+
+  const peerConnectionRef = useRef(null);
+  const localStreamRef = useRef(null);
+  const remoteStreamRef = useRef(null);
+
+  // Update state and refs together
+  const setPeerConnectionSafe = (pc) => {
+    peerConnectionRef.current = pc;
+    setPeerConnection(pc);
+  };
+  const setLocalStreamSafe = (stream) => {
+    localStreamRef.current = stream;
+    setLocalStream(stream);
+  };
+  const setRemoteStreamSafe = (stream) => {
+    remoteStreamRef.current = stream;
+    setRemoteStream(stream);
+  };
 
   const fetchMessages = async () => {
     if (!selectedChat) return;
@@ -551,6 +582,191 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
+  // Helper to get media
+  const getMedia = async (type) => {
+    if (type === 'video') {
+      return await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    } else {
+      return await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+  };
+
+  const initiateCall = async (type) => {
+    setCallType(type);
+    setCallModalOpen(true);
+    const stream = await getMedia(type);
+    setLocalStreamSafe(stream);
+    if (type === 'video' && localVideoRef.current) localVideoRef.current.srcObject = stream;
+    if (type === 'audio' && localAudioRef.current) localAudioRef.current.srcObject = stream;
+
+    const pc = new RTCPeerConnection();
+    stream.getTracks().forEach(track => pc.addTrack(track, stream));
+    setPeerConnectionSafe(pc);
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit('ice-candidate', {
+          to: selectedChat.users.find(u => u._id !== user._id)._id,
+          candidate: event.candidate,
+        });
+      }
+    };
+    pc.ontrack = (event) => {
+      setRemoteStreamSafe(event.streams[0]);
+      if (type === 'video' && remoteVideoRef.current) remoteVideoRef.current.srcObject = event.streams[0];
+      if (type === 'audio' && remoteAudioRef.current) remoteAudioRef.current.srcObject = event.streams[0];
+    };
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    socket.emit('call-offer', {
+      to: selectedChat.users.find(u => u._id !== user._id)._id,
+      offer,
+      type,
+      from: user._id,
+    });
+  };
+
+  const acceptCall = async (call) => {
+    setCallType(call.type);
+    setCallModalOpen(true);
+    setIncomingCall(null);
+
+    const stream = await getMedia(call.type);
+    setLocalStreamSafe(stream);
+    if (call.type === 'video' && localVideoRef.current) localVideoRef.current.srcObject = stream;
+    if (call.type === 'audio' && localAudioRef.current) localAudioRef.current.srcObject = stream;
+
+    const pc = new RTCPeerConnection();
+    stream.getTracks().forEach(track => pc.addTrack(track, stream));
+    setPeerConnectionSafe(pc);
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit('ice-candidate', {
+          to: call.from,
+          candidate: event.candidate,
+        });
+      }
+    };
+    pc.ontrack = (event) => {
+      setRemoteStreamSafe(event.streams[0]);
+      if (call.type === 'video' && remoteVideoRef.current) remoteVideoRef.current.srcObject = event.streams[0];
+      if (call.type === 'audio' && remoteAudioRef.current) remoteAudioRef.current.srcObject = event.streams[0];
+    };
+
+    await pc.setRemoteDescription(new RTCSessionDescription(call.offer));
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+
+    socket.emit('call-answer', {
+      to: call.from,
+      answer,
+    });
+  };
+
+  const rejectCall = (call) => {
+    socket.emit('call-reject', { to: call.from });
+    setIncomingCall(null);
+  };
+
+  const hangUpCall = () => {
+    setCallModalOpen(false);
+    setCallType(null);
+
+    // Stop all local tracks
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+      setLocalStreamSafe(null);
+    }
+
+    // Stop all remote tracks
+    if (remoteStreamRef.current) {
+      remoteStreamRef.current.getTracks().forEach(track => track.stop());
+      setRemoteStreamSafe(null);
+    }
+
+    // Close and reset peer connection
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.onicecandidate = null;
+      peerConnectionRef.current.ontrack = null;
+      peerConnectionRef.current.close();
+      setPeerConnectionSafe(null);
+    }
+
+    // Find the peer user ID safely
+    let peerId = null;
+    if (selectedChat && selectedChat.users) {
+      peerId = selectedChat.users.find(u => u._id !== user._id)?._id;
+    } else if (incomingCall && incomingCall.from) {
+      peerId = incomingCall.from;
+    }
+    if (peerId) {
+      socket.emit('call-hangup', { to: peerId });
+    }
+    setIncomingCall(null);
+  };
+
+  // In useEffect, set up socket event listeners only once (empty dependency array)
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('call-offer', (data) => {
+      setIncomingCall(data);
+    });
+
+    socket.on('call-answer', async (data) => {
+      if (peerConnectionRef.current) {
+        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
+      }
+    });
+
+    socket.on('ice-candidate', async (data) => {
+      if (peerConnectionRef.current) {
+        try {
+          await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (e) {
+          console.error('Error adding received ice candidate', e);
+        }
+      }
+    });
+
+    socket.on('call-reject', () => {
+      hangUpCall();
+    });
+
+    socket.on('call-hangup', () => {
+      hangUpCall();
+    });
+
+    return () => {
+      socket.off('call-offer');
+      socket.off('call-answer');
+      socket.off('ice-candidate');
+      socket.off('call-reject');
+      socket.off('call-hangup');
+    };
+  }, [socket]);
+
+  const toggleMute = () => {
+    if (localStream) {
+      localStream.getAudioTracks().forEach(track => {
+        track.enabled = !track.enabled;
+        setIsMuted(!track.enabled);
+      });
+    }
+  };
+
+  const toggleCamera = () => {
+    if (localStream) {
+      localStream.getVideoTracks().forEach(track => {
+        track.enabled = !track.enabled;
+        setIsCameraOff(!track.enabled);
+      });
+    }
+  };
+
   return (
     <>
       {selectedChat ? (
@@ -614,6 +830,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 setFetchAgain={setFetchAgain}
               />
             ) : null}
+            <IconButton
+              icon={<i className="fas fa-phone"></i>}
+              aria-label="Voice Call"
+              onClick={() => initiateCall('audio')}
+              style={{ marginRight: 8 }}
+            />
+            <IconButton
+              icon={<i className="fas fa-video"></i>}
+              aria-label="Video Call"
+              onClick={() => initiateCall('video')}
+            />
           </Text>
           <Box
             d="flex"
@@ -835,6 +1062,124 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             </Text>
           </Box>
         </Box>
+      )}
+      <Modal isOpen={callModalOpen} onClose={hangUpCall} isCentered size="2xl">
+        <ModalOverlay bg="blackAlpha.700" />
+        <ModalContent p={0} maxW="600px" minH="400px" bg="black">
+          <ModalHeader textAlign="center" color="white" bg="black" borderTopRadius="md">
+            {callType === "video" ? "Video Call" : "Voice Call"}
+          </ModalHeader>
+          <ModalBody p={0} position="relative" minH="340px" bg="black">
+            {callType === "video" ? (
+              <Box width="100%" height="340px" position="relative" bg="black">
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: 0
+                  }}
+                />
+                {/* Local video overlay */}
+                <Box
+                  position="absolute"
+                  bottom={0}
+                  right={0}
+                  border="2px solid #fff"
+                  borderRadius="md"
+                  overflow="hidden"
+                  zIndex={2}
+                  width="600px"
+                  height="402px"
+                  bg="#444"
+                  boxShadow="0 2px 8px rgba(0,0,0,0.15)"
+                >
+                  <video
+                    ref={localVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: 8,
+                      objectFit: "cover"
+                    }}
+                  />
+                </Box>
+              </Box>
+            ) : (
+              <>
+                <Avatar size="2xl" name={peerName} src={peerAvatar} mb={4} top={20} left={60}/>
+                <audio
+                  ref={remoteAudioRef}
+                  autoPlay
+                  playsInline
+                  style={{ display: 'block' }}
+                />
+              </>
+            )}
+          </ModalBody>
+          <ModalFooter flexDirection="column" bg="white" borderBottomRadius="md">
+            <Text fontWeight="bold" fontSize="xl" mt={2} mb={2} color="black">{peerName}</Text>
+            <Box display="flex" justifyContent="center" gap={4}>
+              <IconButton
+                icon={isMuted ? <FaMicrophoneSlash /> : <FaMicrophone />}
+                aria-label="Mute"
+                onClick={toggleMute}
+                colorScheme={isMuted ? "gray" : "teal"}
+                variant="ghost"
+              />
+              {callType === "video" && (
+                <IconButton
+                  icon={isCameraOff ? <FaVideoSlash /> : <FaVideo />}
+                  aria-label="Camera"
+                  onClick={toggleCamera}
+                  colorScheme={isCameraOff ? "gray" : "teal"}
+                  variant="ghost"
+                />
+              )}
+              <IconButton
+                icon={<FaPhoneSlash />}
+                aria-label="Hang Up"
+                onClick={hangUpCall}
+                colorScheme="red"
+                size="lg"
+                borderRadius="full"
+              />
+            </Box>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      {incomingCall && (
+        <Modal isOpen={!!incomingCall} onClose={() => rejectCall(incomingCall)} isCentered>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader textAlign="center">
+              Incoming {incomingCall?.type === "video" ? "Video" : "Voice"} Call
+            </ModalHeader>
+            <ModalBody display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+              <Avatar size="xl" name={incomingCall?.callerName || "Contact"} src={incomingCall?.callerAvatar} mb={4} />
+              <Text fontWeight="bold" fontSize="lg" mb={2}>
+                {incomingCall?.callerName || "Contact"}
+              </Text>
+              <Text color="gray.500" fontSize="md" mb={2}>
+                is calling you...
+              </Text>
+            </ModalBody>
+            <ModalFooter display="flex" justifyContent="center" gap={4}>
+              <Button colorScheme="teal" onClick={() => acceptCall(incomingCall)}>
+                Accept
+              </Button>
+              <Button colorScheme="red" onClick={() => rejectCall(incomingCall)}>
+                Reject
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       )}
     </>
   );
