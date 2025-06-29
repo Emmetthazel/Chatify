@@ -177,6 +177,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
       // Remove the message from the local state
       setMessages(messages.filter((msg) => msg._id !== messageId));
+      setFetchAgain(prev => !prev);
 
       toast({
         title: "Message deleted!",

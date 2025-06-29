@@ -151,6 +151,14 @@ const deleteMessage = asyncHandler(async (req, res) => {
       { new: true }
     );
 
+    // Find the new latest message for this chat (not deleted for this user)
+    const latestMessage = await Message.findOne({
+      chat: message.chat,
+      deletedBy: { $ne: userId }
+    }).sort({ createdAt: -1 });
+
+    await Chat.findByIdAndUpdate(message.chat, { latestMessage });
+
     res.json({ message: "Message deleted successfully" });
   } catch (error) {
     res.status(400);
