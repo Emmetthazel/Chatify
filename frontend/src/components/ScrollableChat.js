@@ -214,6 +214,73 @@ const ScrollableChat = ({ messages, isGroupChat, users, deleteMessage, user }) =
             const showDaySeparator =
               i === 0 || !isSameDay(messages[i - 1].createdAt, m.createdAt);
             const isOwnMessage = m.sender._id === user._id;
+            // Custom rendering for call system messages
+            if (m.content === "__call__" && m.callInfo) {
+              // Determine call type, direction, and status
+              const { type, direction, status, from } = m.callInfo;
+              let callText = "";
+              let icon = type === "video" ? "📹" : "📞";
+              
+              // Determine if current user is the sender of this call message
+              const isCallSender = m.sender._id === user._id;
+              
+              if (status === "missed") {
+                if (isCallSender) {
+                  callText = `${icon} Missed ${type === "video" ? "video" : "voice"} call`;
+                } else {
+                  callText = `${icon} You missed a ${type === "video" ? "video" : "voice"} call`;
+                }
+              } else if (status === "ended") {
+                if (isCallSender) {
+                  callText = `${icon} Call ended`;
+                } else {
+                  callText = `${icon} Call ended`;
+                }
+              } else if (direction === "outgoing") {
+                if (isCallSender) {
+                  callText = `${icon} You started a ${type === "video" ? "video" : "voice"} call`;
+                } else {
+                  callText = `${icon} Incoming ${type === "video" ? "video" : "voice"} call`;
+                }
+              } else if (direction === "incoming") {
+                if (isCallSender) {
+                  callText = `${icon} You received a ${type === "video" ? "video" : "voice"} call`;
+                } else {
+                  callText = `${icon} Incoming ${type === "video" ? "video" : "voice"} call`;
+                }
+              } else {
+                callText = `${icon} Call event`;
+              }
+              return (
+                <div key={m._id} style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
+                  <div style={{
+                    background: status === 'missed' ? '#ffeaea' : '#f3f6fa',
+                    color: status === 'missed' ? '#d32f2f' : '#333',
+                    border: status === 'missed' ? '1px solid #f44336' : '1px solid #b3c2d6',
+                    borderRadius: 12,
+                    padding: '8px 18px',
+                    fontWeight: 500,
+                    fontSize: '1em',
+                    boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
+                    display: 'inline-block',
+                    textAlign: 'center',
+                    minWidth: 120,
+                    maxWidth: '90%',
+                  }}>
+                    {callText}
+                    <span style={{
+                      display: 'block',
+                      fontSize: '0.85em',
+                      color: '#888',
+                      fontWeight: 400,
+                      marginTop: 2,
+                    }}>
+                      {formatTime(m.createdAt)}
+                    </span>
+                  </div>
+                </div>
+              );
+            }
             return (
               <div key={m._id} ref={el => messageRefs.current[i] = el}>
                 {showDaySeparator && (

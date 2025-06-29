@@ -61,49 +61,150 @@ const io = require("socket.io")(server, {
   },
 });
 
+// Global error handler for socket.io
+io.on("error", (error) => {
+  console.error("Socket.io error:", error);
+});
+
 io.on("connection", (socket) => {
   console.log("Connected to socket.io");
+  
+  // Error handler for individual socket
+  socket.on("error", (error) => {
+    console.error("Socket error:", error);
+  });
+
   socket.on("setup", (userData) => {
-    socket.join(userData._id);
-    socket.emit("connected");
+    try {
+      socket.join(userData._id);
+      socket.emit("connected");
+    } catch (error) {
+      console.error("Error in setup:", error);
+    }
   });
 
   socket.on("join chat", (room) => {
-    socket.join(room);
-    console.log("User Joined Room: " + room);
+    try {
+      socket.join(room);
+      console.log("User Joined Room: " + room);
+    } catch (error) {
+      console.error("Error joining chat:", error);
+    }
   });
-  socket.on("typing", (room) => socket.in(room).emit("typing"));
-  socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
+  
+  socket.on("typing", (room) => {
+    try {
+      socket.in(room).emit("typing");
+    } catch (error) {
+      console.error("Error in typing:", error);
+    }
+  });
+  
+  socket.on("stop typing", (room) => {
+    try {
+      socket.in(room).emit("stop typing");
+    } catch (error) {
+      console.error("Error in stop typing:", error);
+    }
+  });
 
   socket.on("new message", (newMessageRecieved) => {
-    var chat = newMessageRecieved.chat;
+    try {
+      var chat = newMessageRecieved.chat;
 
-    if (!chat.users) return console.log("chat.users not defined");
+      if (!chat.users) {
+        console.log("chat.users not defined");
+        return;
+      }
 
-    chat.users.forEach((user) => {
-      if (user._id == newMessageRecieved.sender._id) return;
+      chat.users.forEach((user) => {
+        if (user._id == newMessageRecieved.sender._id) return;
 
-      socket.in(user._id).emit("message received", newMessageRecieved);
-    });
+        socket.in(user._id).emit("message received", newMessageRecieved);
+      });
+    } catch (error) {
+      console.error("Error in new message:", error);
+    }
   });
 
   socket.on("disconnect", () => {
     console.log("USER DISCONNECTED");
   });
 
+  // Call-related socket events with error handling
   socket.on('call-offer', (data) => {
-    io.to(data.to).emit('call-offer', data);
+    try {
+      console.log('Call offer received:', data);
+      if (data && data.to) {
+        io.to(data.to).emit('call-offer', data);
+      } else {
+        console.error('Invalid call-offer data:', data);
+      }
+    } catch (error) {
+      console.error("Error in call-offer:", error);
+    }
   });
+  
   socket.on('call-answer', (data) => {
-    io.to(data.to).emit('call-answer', data);
+    try {
+      console.log('Call answer received:', data);
+      if (data && data.to) {
+        io.to(data.to).emit('call-answer', data);
+      } else {
+        console.error('Invalid call-answer data:', data);
+      }
+    } catch (error) {
+      console.error("Error in call-answer:", error);
+    }
   });
+  
   socket.on('ice-candidate', (data) => {
-    io.to(data.to).emit('ice-candidate', data);
+    try {
+      if (data && data.to) {
+        io.to(data.to).emit('ice-candidate', data);
+      } else {
+        console.error('Invalid ice-candidate data:', data);
+      }
+    } catch (error) {
+      console.error("Error in ice-candidate:", error);
+    }
   });
+  
   socket.on('call-reject', (data) => {
-    io.to(data.to).emit('call-reject', data);
+    try {
+      console.log('Call reject received:', data);
+      if (data && data.to) {
+        io.to(data.to).emit('call-reject', data);
+      } else {
+        console.error('Invalid call-reject data:', data);
+      }
+    } catch (error) {
+      console.error("Error in call-reject:", error);
+    }
   });
+  
   socket.on('call-hangup', (data) => {
-    io.to(data.to).emit('call-hangup', data);
+    try {
+      console.log('Call hangup received:', data);
+      if (data && data.to) {
+        io.to(data.to).emit('call-hangup', data);
+      } else {
+        console.error('Invalid call-hangup data:', data);
+      }
+    } catch (error) {
+      console.error("Error in call-hangup:", error);
+    }
   });
 });
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Don't exit the process, just log the error
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit the process, just log the error
+});
+

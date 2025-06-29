@@ -13,6 +13,13 @@ const messageSchema = mongoose.Schema(
       _id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       originalChat: { type: mongoose.Schema.Types.ObjectId, ref: "Chat" }
     },
+    callInfo: {
+      type: { type: String, enum: ['audio', 'video'] },
+      direction: { type: String, enum: ['outgoing', 'incoming'] },
+      status: { type: String, enum: ['missed', 'ended', ''] },
+      from: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      timestamp: { type: Date }
+    },
   },
   { timestamps: true }
 );

@@ -22,7 +22,7 @@ const ENDPOINT = "http://localhost:5000"; // "https://talk-a-tive.herokuapp.com"
 var socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
-  const { selectedChat, setSelectedChat, user, notification, setNotification, callModalOpen, setCallModalOpen } = ChatState();
+  const { selectedChat, setSelectedChat, user, notification, setNotification, callModalOpen, setCallModalOpen, chats } = ChatState();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
@@ -67,6 +67,18 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
   const remoteStreamRef = useRef(null);
+
+  // Helper function to find chat between two users
+  const findChatBetweenUsers = (userId1, userId2) => {
+    if (!chats) return null;
+    
+    return chats.find(chat => {
+      if (chat.isGroupChat) return false; // Only look for 1-on-1 chats
+      
+      const userIds = chat.users.map(u => u._id);
+      return userIds.includes(userId1) && userIds.includes(userId2);
+    });
+  };
 
   // Update state and refs together
   const setPeerConnectionSafe = (pc) => {
@@ -589,19 +601,105 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  // Helper to get media
+  // Helper to get media with error handling
   const getMedia = async (type) => {
-    if (type === 'video') {
-      return await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    } else {
-      return await navigator.mediaDevices.getUserMedia({ audio: true });
+    try {
+      if (type === 'video') {
+        return await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      } else {
+        return await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+    } catch (err) {
+      if (err.name === 'NotAllowedError') {
+        toast({
+          title: 'Camera or microphone access was denied.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+          position: 'top',
+        });
+      } else if (err.name === 'NotFoundError') {
+        toast({
+          title: 'No camera or microphone found.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+          position: 'top',
+        });
+      } else if (err.name === 'NotReadableError' || err.message.includes('in use')) {
+        toast({
+          title: 'Camera or microphone is already in use by another application or tab.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+          position: 'top',
+        });
+      } else {
+        toast({
+          title: 'Error accessing media devices',
+          description: err.message,
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+          position: 'top',
+        });
+      }
+      throw err; // Still throw so call logic can handle cleanup if needed
+    }
+  };
+
+  const sendCallSystemMessage = async (callType, direction, status = "", targetChatId = null) => {
+    try {
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+      
+      // Use the provided chatId or fall back to selectedChat
+      const chatId = targetChatId || selectedChat;
+      
+      const { data } = await axios.post(
+        "/api/message",
+        {
+          content: "__call__",
+          chatId: chatId,
+          callInfo: {
+            type: callType,
+            direction, // 'outgoing', 'incoming', 'missed'
+            status, // 'missed', 'ended', etc.
+            from: user._id,
+            timestamp: new Date(),
+          },
+        },
+        config
+      );
+      
+      // Emit socket event for real-time notification
+      socket.emit("new message", data);
+      
+      // Only update local messages if we're in the correct chat
+      if (selectedChat && selectedChat._id === chatId) {
+        setMessages(prevMessages => [...prevMessages, data]);
+      }
+      setFetchAgain(prev => !prev);
+    } catch (err) {
+      // Optionally show a toast
     }
   };
 
   const initiateCall = async (type) => {
     setCallType(type);
     setCallModalOpen(true);
-    const stream = await getMedia(type);
+    let stream;
+    try {
+      stream = await getMedia(type);
+    } catch (err) {
+      setCallModalOpen(false);
+      setCallType(null);
+      return; // Stop call setup if device access fails
+    }
     setLocalStreamSafe(stream);
     if (type === 'video' && localVideoRef.current) localVideoRef.current.srcObject = stream;
     if (type === 'audio' && localAudioRef.current) localAudioRef.current.srcObject = stream;
@@ -633,6 +731,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       type,
       from: user._id,
     });
+
+    sendCallSystemMessage(type, 'outgoing');
   };
 
   const acceptCall = async (call) => {
@@ -644,7 +744,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       avatar: call.callerAvatar,
     });
 
-    const stream = await getMedia(call.type);
+    let stream;
+    try {
+      stream = await getMedia(call.type);
+    } catch (err) {
+      setCallModalOpen(false);
+      setCallType(null);
+      return; // Stop call setup if device access fails
+    }
     setLocalStreamSafe(stream);
     if (call.type === 'video' && localVideoRef.current) localVideoRef.current.srcObject = stream;
     if (call.type === 'audio' && localAudioRef.current) localAudioRef.current.srcObject = stream;
@@ -675,11 +782,19 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       to: call.from,
       answer,
     });
+
+    // Find the correct chat between users
+    const correctChat = findChatBetweenUsers(user._id, call.from);
+    sendCallSystemMessage(call.type, 'incoming', '', correctChat?._id);
   };
 
   const rejectCall = (call) => {
     socket.emit('call-reject', { to: call.from });
     setIncomingCall(null);
+    
+    // Find the correct chat between users
+    const correctChat = findChatBetweenUsers(user._id, call.from);
+    sendCallSystemMessage(call.type, 'incoming', 'missed', correctChat?._id);
   };
 
   const hangUpCall = () => {
@@ -717,6 +832,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       socket.emit('call-hangup', { to: peerId });
     }
     setIncomingCall(null);
+
+    // Find the correct chat between users
+    const correctChat = findChatBetweenUsers(user._id, peerId);
+    sendCallSystemMessage(callType, 'outgoing', 'ended', correctChat?._id);
   };
 
   // In useEffect, set up socket event listeners only once (empty dependency array)

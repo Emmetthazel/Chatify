@@ -41,7 +41,7 @@ const allMessages = asyncHandler(async (req, res) => {
 //@route           POST /api/Message/
 //@access          Protected
 const sendMessage = asyncHandler(async (req, res) => {
-  let { content, chatId, isForward, originalMessageId } = req.body;
+  let { content, chatId, isForward, originalMessageId, callInfo } = req.body;
   let attachment = null;
   
   if (req.file) {
@@ -95,6 +95,11 @@ const sendMessage = asyncHandler(async (req, res) => {
     chat: chatId,
     attachment: attachment,
   };
+
+  // Add callInfo if it exists (for call system messages)
+  if (callInfo) {
+    newMessage.callInfo = callInfo;
+  }
 
   try {
     var message = await Message.create(newMessage);
