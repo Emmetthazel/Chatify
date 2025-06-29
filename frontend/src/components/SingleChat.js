@@ -2,7 +2,7 @@ import { FormControl } from "@chakra-ui/form-control";
 import { Input } from "@chakra-ui/input";
 import { Box, Text } from "@chakra-ui/layout";
 import "./styles.css";
-import { IconButton, Spinner, useToast, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Avatar, Button } from "@chakra-ui/react";
+import { IconButton, Spinner, useToast, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Avatar, Button, Menu, MenuButton, MenuList, MenuItem } from "@chakra-ui/react";
 import { getSender, getSenderFull } from "../config/ChatLogics";
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
@@ -16,7 +16,8 @@ import data from '@emoji-mart/data';
 import io from "socket.io-client";
 import UpdateGroupChatModal from "./miscellaneous/UpdateGroupChatModal";
 import { ChatState } from "../Context/ChatProvider";
-import { FaMicrophone, FaStop, FaFileAlt, FaPhoneSlash, FaMicrophoneSlash, FaVideo, FaVideoSlash } from "react-icons/fa";
+import { FaMicrophone, FaStop, FaFileAlt, FaPhoneSlash, FaMicrophoneSlash, FaVideo, FaVideoSlash, FaImage } from "react-icons/fa";
+import { MdVideoLibrary } from "react-icons/md";
 const ENDPOINT = "http://localhost:5000"; // "https://talk-a-tive.herokuapp.com"; -> After deployment
 var socket, selectedChatCompare;
 
@@ -822,25 +823,50 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               ) : null}
             </Box>
             {messages && !selectedChat.isGroupChat ? (
-              <ProfileModal user={getSenderFull(user, selectedChat.users)} />
+              <Box d="flex" alignItems="center" ml={2}>
+                <IconButton
+                  icon={<i className="fas fa-phone"></i>}
+                  aria-label="Voice Call"
+                  onClick={() => initiateCall('audio')}
+                  size="md"
+                  mr={2}
+                />
+                <IconButton
+                  icon={<i className="fas fa-video"></i>}
+                  aria-label="Video Call"
+                  onClick={() => initiateCall('video')}
+                  size="md"
+                  mr={2}
+                />
+                <ProfileModal user={getSenderFull(user, selectedChat.users)} />
+              </Box>
             ) : messages && selectedChat.isGroupChat ? (
-              <UpdateGroupChatModal
-                fetchMessages={fetchMessages}
-                fetchAgain={fetchAgain}
-                setFetchAgain={setFetchAgain}
-              />
+              <Box d="flex" alignItems="center" ml={2}>
+                <IconButton
+                  icon={<i className="fas fa-phone"></i>}
+                  aria-label="Voice Call"
+                  onClick={() => initiateCall('audio')}
+                  size="md"
+                  mr={2}
+                />
+                <IconButton
+                  icon={<i className="fas fa-video"></i>}
+                  aria-label="Video Call"
+                  onClick={() => initiateCall('video')}
+                  size="md"
+                  mr={2}
+                />
+                {selectedChat.isGroupChat && (
+                  <Box ml={0}>
+                    <UpdateGroupChatModal
+                      fetchMessages={fetchMessages}
+                      fetchAgain={fetchAgain}
+                      setFetchAgain={setFetchAgain}
+                    />
+                  </Box>
+                )}
+              </Box>
             ) : null}
-            <IconButton
-              icon={<i className="fas fa-phone"></i>}
-              aria-label="Voice Call"
-              onClick={() => initiateCall('audio')}
-              style={{ marginRight: 8 }}
-            />
-            <IconButton
-              icon={<i className="fas fa-video"></i>}
-              aria-label="Video Call"
-              onClick={() => initiateCall('video')}
-            />
           </Text>
           <Box
             d="flex"
@@ -927,47 +953,27 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 </button>
               </span>
               {/* Image upload button */}
-              <span style={{ position: 'absolute', left: 45, top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}>
-                <label htmlFor="chat-image-upload" style={{ cursor: 'pointer', margin: 0 }}>
-                  <AttachmentIcon boxSize={5} color="#555" />
-                  <input
-                    id="chat-image-upload"
-                    type="file"
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    onChange={handleImageUpload}
-                    disabled={imageLoading}
-                  />
-                </label>
-              </span>
-              {/* Document upload button with different icon */}
-              <span style={{ position: 'absolute', left: 80, top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}>
-                <label htmlFor="chat-doc-upload" style={{ cursor: 'pointer', margin: 0 }}>
-                  <FaFileAlt size={20} color="#555" />
-                  <input
-                    id="chat-doc-upload"
-                    type="file"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.csv,.json,.xml,.md,.rtf,.odt,.ods,.odp"
-                    style={{ display: 'none' }}
-                    onChange={handleDocUpload}
-                    disabled={docLoading}
-                  />
-                </label>
-              </span>
-              {/* Video upload button */}
-              <span style={{ position: 'absolute', left: 115, top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}>
-                <label htmlFor="chat-video-upload" style={{ cursor: 'pointer', margin: 0 }}>
-                  <i className="fas fa-video" style={{ fontSize: 20, color: "#555" }} />
-                  <input
-                    id="chat-video-upload"
-                    type="file"
-                    accept="video/*"
-                    style={{ display: 'none' }}
-                    onChange={handleVideoUpload}
-                    disabled={videoLoading}
-                  />
-                </label>
-              </span>
+              <Menu>
+                <MenuButton
+                  as={IconButton}
+                  icon={<AttachmentIcon />}
+                  aria-label="Attach"
+                  variant="ghost"
+                  size="lg"
+                  style={{ position: 'absolute', left: 45, top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}
+                />
+                <MenuList>
+                  <MenuItem icon={<FaImage />} onClick={() => document.getElementById('chat-image-upload').click()}>
+                    Attach Image
+                  </MenuItem>
+                  <MenuItem icon={<FaFileAlt />} onClick={() => document.getElementById('chat-doc-upload').click()}>
+                    Attach Document
+                  </MenuItem>
+                  <MenuItem icon={<MdVideoLibrary />} onClick={() => document.getElementById('chat-video-upload').click()}>
+                    Attach Video
+                  </MenuItem>
+                </MenuList>
+              </Menu>
               {showEmojiPicker && (
                 <div style={{ position: 'absolute', bottom: '60px', left: 0, zIndex: 10 }}>
                   <Picker data={data} onEmojiSelect={addEmoji} theme="dark" />
@@ -1181,6 +1187,30 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           </ModalContent>
         </Modal>
       )}
+      <input
+        id="chat-image-upload"
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleImageUpload}
+        disabled={imageLoading}
+      />
+      <input
+        id="chat-doc-upload"
+        type="file"
+        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.csv,.json,.xml,.md,.rtf,.odt,.ods,.odp"
+        style={{ display: 'none' }}
+        onChange={handleDocUpload}
+        disabled={docLoading}
+      />
+      <input
+        id="chat-video-upload"
+        type="file"
+        accept="video/*"
+        style={{ display: 'none' }}
+        onChange={handleVideoUpload}
+        disabled={videoLoading}
+      />
     </>
   );
 };
