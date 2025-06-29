@@ -18,6 +18,7 @@ const ChatProvider = ({ children }) => {
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
   const [peerConnection, setPeerConnection] = useState(null);
+  const [peerInfo, setPeerInfo] = useState(null);
   const localVideoRef = useRef();
   const remoteVideoRef = useRef();
   const localAudioRef = useRef();
@@ -88,6 +89,8 @@ const ChatProvider = ({ children }) => {
     socket.on('call-hangup', () => {
       setIncomingCall(null);
       setCallModalOpen(false);
+      setCallType(null);
+      if (typeof setPeerInfo === 'function') setPeerInfo(null); // If peerInfo is in context
     });
     return () => {
       socket.off('call-offer');
@@ -125,6 +128,8 @@ const ChatProvider = ({ children }) => {
         remoteAudioRef,
         acceptCall,
         rejectCall,
+        peerInfo,
+        setPeerInfo,
       }}
     >
       {children}

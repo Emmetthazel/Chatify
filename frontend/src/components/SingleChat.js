@@ -22,7 +22,7 @@ const ENDPOINT = "http://localhost:5000"; // "https://talk-a-tive.herokuapp.com"
 var socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
-  const { selectedChat, setSelectedChat, user, notification, setNotification } = ChatState();
+  const { selectedChat, setSelectedChat, user, notification, setNotification, callModalOpen, setCallModalOpen } = ChatState();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
@@ -41,7 +41,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [videoLoading, setVideoLoading] = useState(false);
   const toast = useToast();
   const [callType, setCallType] = useState(null); // 'audio' or 'video'
-  const [callModalOpen, setCallModalOpen] = useState(false);
   const [incomingCall, setIncomingCall] = useState(null); // { from, type }
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
@@ -54,6 +53,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [isCameraOff, setIsCameraOff] = useState(false);
   const peerName = (selectedChat && selectedChat.users && selectedChat.users.find(u => u._id !== user._id)?.name) || "Contact";
   const peerAvatar = (selectedChat && selectedChat.users && selectedChat.users.find(u => u._id !== user._id)?.pic) || undefined;
+  const [peerInfo, setPeerInfo] = useState(null);
 
   const defaultOptions = {
     loop: true,
@@ -633,6 +633,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     setCallType(call.type);
     setCallModalOpen(true);
     setIncomingCall(null);
+    setPeerInfo({
+      name: call.callerName,
+      avatar: call.callerAvatar,
+    });
 
     const stream = await getMedia(call.type);
     setLocalStreamSafe(stream);
@@ -713,8 +717,25 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('call-offer', (data) => {
-      setIncomingCall(data);
+    socket.on('call-offer', async (data) => {
+      // Fetch caller profile
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        };
+        const res = await axios.get(`/api/user/${data.from}`, config);
+        console.log('Caller API response:', res.data); // Debug log
+        const caller = res.data;
+        setIncomingCall({
+          ...data,
+          callerName: caller.name,
+          callerAvatar: caller.pic,
+        });
+      } catch (err) {
+        setIncomingCall({ ...data, callerName: 'Contact', callerAvatar: undefined });
+      }
     });
 
     socket.on('call-answer', async (data) => {
@@ -1105,7 +1126,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               </Box>
             ) : (
               <>
-                <Avatar size="2xl" name={peerName} src={peerAvatar} mb={4} top={20} left={60}/>
+                <Avatar size="2xl" name={peerInfo?.name || peerName} src={peerInfo?.avatar || peerAvatar} mb={4} top={20} left={60}/>
                 <audio
                   ref={remoteAudioRef}
                   autoPlay
@@ -1116,7 +1137,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             )}
           </ModalBody>
           <ModalFooter flexDirection="column" bg="white" borderBottomRadius="md">
-            <Text fontWeight="bold" fontSize="xl" mt={2} mb={2} color="black">{peerName}</Text>
+            <Text fontWeight="bold" fontSize="xl" mt={2} mb={2} color="black">{peerInfo?.name || peerName}</Text>
             <Box display="flex" justifyContent="center" gap={4}>
               <IconButton
                 icon={isMuted ? <FaMicrophoneSlash /> : <FaMicrophone />}
