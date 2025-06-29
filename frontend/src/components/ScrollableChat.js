@@ -48,7 +48,7 @@ const isSameDay = (d1, d2) => {
 };
 
 const ScrollableChat = ({ messages, isGroupChat, users, deleteMessage, user }) => {
-  const { user: contextUser, chats } = ChatState();
+  const { user: contextUser, chats, socket } = ChatState();
   const toast = useToast();
   const [isForwardOpen, setIsForwardOpen] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -162,6 +162,10 @@ const ScrollableChat = ({ messages, isGroupChat, users, deleteMessage, user }) =
           }
         );
         
+        // Emit socket event for real-time update
+        if (socket) {
+          socket.emit("new message", response.data);
+        }
         console.log('Forward response:', response.data);
       }
       toast({ title: 'Message forwarded!', status: 'success', duration: 2000, isClosable: true });

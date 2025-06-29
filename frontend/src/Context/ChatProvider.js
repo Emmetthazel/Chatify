@@ -1,7 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
+import io from "socket.io-client";
 
 const ChatContext = createContext();
+
+const ENDPOINT = "http://localhost:5000";
+let socket;
 
 const ChatProvider = ({ children }) => {
   const [selectedChat, setSelectedChat] = useState();
@@ -20,6 +24,13 @@ const ChatProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [history]);
 
+  // Initialize socket only once
+  useEffect(() => {
+    if (!socket) {
+      socket = io(ENDPOINT);
+    }
+  }, []);
+
   return (
     <ChatContext.Provider
       value={{
@@ -31,6 +42,7 @@ const ChatProvider = ({ children }) => {
         setNotification,
         chats,
         setChats,
+        socket,
       }}
     >
       {children}

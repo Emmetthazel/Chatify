@@ -110,7 +110,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             config
           );
           socket.emit("new message", data);
-          setMessages([...messages, data]);
+          setMessages(prevMessages => [...prevMessages, data]);
         } catch (error) {
           toast({
             title: "Error Occured!",
@@ -171,8 +171,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     socket.on("typing", () => setIsTyping(true));
     socket.on("stop typing", () => setIsTyping(false));
 
-    // eslint-disable-next-line
-  }, []);
+    return () => {
+      socket.off("connected");
+      socket.off("typing");
+      socket.off("stop typing");
+      socket.disconnect();
+    };
+  }, [user]);
 
   useEffect(() => {
     fetchMessages();
@@ -182,20 +187,24 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   }, [selectedChat]);
 
   useEffect(() => {
-    socket.on("message recieved", (newMessageRecieved) => {
+    socket.on("message received", (newMessageRecieved) => {
       if (
         !selectedChatCompare || // if chat is not selected or doesn't match current chat
         selectedChatCompare._id !== newMessageRecieved.chat._id
       ) {
         if (!notification.includes(newMessageRecieved)) {
-          setNotification([newMessageRecieved, ...notification]);
-          setFetchAgain(!fetchAgain);
+          setNotification(prevNotifications => [newMessageRecieved, ...prevNotifications]);
+          setFetchAgain(prevFetchAgain => !prevFetchAgain);
         }
       } else {
-        setMessages([...messages, newMessageRecieved]);
+        setMessages(prevMessages => [...prevMessages, newMessageRecieved]);
       }
     });
-  });
+
+    return () => {
+      socket.off("message received");
+    };
+  }, [selectedChatCompare]);
 
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
@@ -285,7 +294,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         config
       );
       socket.emit("new message", data);
-      setMessages([...messages, data]);
+      setMessages(prevMessages => [...prevMessages, data]);
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -429,7 +438,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         config
       );
       socket.emit("new message", data);
-      setMessages([...messages, data]);
+      setMessages(prevMessages => [...prevMessages, data]);
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -458,7 +467,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       };
       const res = await axios.post("/api/message", data, config);
       socket.emit("new message", res.data);
-      setMessages([...messages, res.data]);
+      setMessages(prevMessages => [...prevMessages, res.data]);
     } catch (err) {
       toast({
         title: "Error uploading document",
@@ -522,7 +531,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         config
       );
       socket.emit("new message", data);
-      setMessages([...messages, data]);
+      setMessages(prevMessages => [...prevMessages, data]);
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -657,6 +666,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               </div>
             )}
 
+            {/* Typing indicator above input bar */}
+            {istyping && (
+              <div style={{ width: 70, margin: '0 auto', marginBottom: 5 }}>
+                <Lottie
+                  options={defaultOptions}
+                  width={70}
+                />
+              </div>
+            )}
             <FormControl
               onKeyDown={sendMessage}
               id="first-name"
@@ -664,18 +682,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               mt={3}
               style={{ position: 'relative' }}
             >
-              {istyping ? (
-                <div>
-                  <Lottie
-                    options={defaultOptions}
-                    // height={50}
-                    width={70}
-                    style={{ marginBottom: 15, marginLeft: 0 }}
-                  />
-                </div>
-              ) : (
-                <></>
-              )}
               {/* Emoji Button inside input */}
               <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}>
                 <button

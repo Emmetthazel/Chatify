@@ -9,6 +9,8 @@ import GroupChatModal from "./miscellaneous/GroupChatModal";
 import { Button, Tabs, TabList, Tab, IconButton } from "@chakra-ui/react";
 import { ChatState } from "../Context/ChatProvider";
 import { FaArchive, FaChevronDown, FaChevronRight, FaTrash } from "react-icons/fa";
+import NotificationBadge from "react-notification-badge";
+import { Effect } from "react-notification-badge";
 
 const MyChats = ({ fetchAgain }) => {
   const [loggedUser, setLoggedUser] = useState();
@@ -233,73 +235,94 @@ const MyChats = ({ fetchAgain }) => {
         {chats ? (
           <>
             <Stack overflowY="scroll">
-              {filteredChats.map((chat) => (
-                <Box
-                  onClick={() => {
-                    setSelectedChat(chat);
-                    setNotification(notification.filter((n) => n.chat && n.chat._id !== chat._id));
-                  }}
-                  cursor="pointer"
-                  bg={selectedChat === chat ? "#38B2AC" : "#E8E8E8"}
-                  color={selectedChat === chat ? "white" : "black"}
-                  px={3}
-                  py={2}
-                  borderRadius="lg"
-                  key={chat._id}
-                  position="relative"
-                >
-                  <Text>
-                    {!chat.isGroupChat
-                      ? getSender(loggedUser, chat.users)
-                      : chat.chatName}
-                  </Text>
-                  {chat.latestMessage && (
-                    <Text fontSize="xs">
-                      <b>{chat.latestMessage.sender?.name} : </b>
-                      {chat.latestMessage.content
-                        ? (chat.latestMessage.content.length > 50
-                            ? chat.latestMessage.content.substring(0, 51) + "..."
-                            : chat.latestMessage.content)
-                        : chat.latestMessage.attachment
-                          ? (
-                              <>
-                                <span role="img" aria-label="attachment">📎</span>
-                                {chat.latestMessage.attachment.split('/').pop()}
-                              </>
-                            )
-                          : ""}
-                    </Text>
-                  )}
-                  <IconButton
-                    icon={<FaArchive />}
-                    size="sm"
-                    aria-label="Archive chat"
-                    position="absolute"
-                    top={2}
-                    right={9}
-                    mr={2}
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleArchive(chat._id);
+              {filteredChats.map((chat) => {
+                const unreadCount = notification.filter(n => n.chat && n.chat._id === chat._id).length;
+                return (
+                  <Box
+                    onClick={() => {
+                      setSelectedChat(chat);
+                      setNotification(notification.filter((n) => n.chat && n.chat._id !== chat._id));
                     }}
-                    title="Archive chat"
-                  />
-                  <IconButton
-                    icon={<FaTrash />}
-                    size="sm"
-                    aria-label="Delete chat"
-                    position="absolute"
-                    top={2}
-                    right={2}
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleDelete(chat._id);
-                    }}
-                    title="Delete chat"
-                    colorScheme="red"
-                  />
-                </Box>
-              ))}
+                    cursor="pointer"
+                    bg={selectedChat === chat ? "#38B2AC" : "#E8E8E8"}
+                    color={selectedChat === chat ? "white" : "black"}
+                    px={5}
+                    py={2}
+                    borderRadius="lg"
+                    key={chat._id}
+                    position="relative"
+                  >
+                    <Box d="flex" justifyContent="space-between" alignItems="center">
+                      <Box d="flex" alignItems="center" flex={1} minWidth={0}>
+                        {unreadCount > 0 && (
+                          <Box mr={2} display="flex" alignItems="center">
+                            <NotificationBadge
+                              count={unreadCount}
+                              effect={Effect.SCALE}
+                            />
+                          </Box>
+                        )}
+                        <Text
+                          isTruncated
+                          maxWidth="100%"
+                          whiteSpace="nowrap"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                        >
+                          {!chat.isGroupChat
+                            ? getSender(loggedUser, chat.users)
+                            : chat.chatName}
+                        </Text>
+                      </Box>
+                    </Box>
+                    {chat.latestMessage && (
+                      <Text fontSize="xs">
+                        <b>{chat.latestMessage.sender?.name} : </b>
+                        {chat.latestMessage.content
+                          ? (chat.latestMessage.content.length > 50
+                              ? chat.latestMessage.content.substring(0, 51) + "..."
+                              : chat.latestMessage.content)
+                          : chat.latestMessage.attachment
+                            ? (
+                                <>
+                                  <span role="img" aria-label="attachment">📎</span>
+                                  {chat.latestMessage.attachment.split('/').pop()}
+                                </>
+                              )
+                            : ""}
+                      </Text>
+                    )}
+                    <IconButton
+                      icon={<FaArchive />}
+                      size="sm"
+                      aria-label="Archive chat"
+                      position="absolute"
+                      top={2}
+                      right={9}
+                      mr={2}
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleArchive(chat._id);
+                      }}
+                      title="Archive chat"
+                    />
+                    <IconButton
+                      icon={<FaTrash />}
+                      size="sm"
+                      aria-label="Delete chat"
+                      position="absolute"
+                      top={2}
+                      right={2}
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleDelete(chat._id);
+                      }}
+                      title="Delete chat"
+                      colorScheme="red"
+                    />
+                  </Box>
+                );
+              })}
             </Stack>
             {selectedTab === 0 && (
               <Box mt={4}>
@@ -322,73 +345,94 @@ const MyChats = ({ fetchAgain }) => {
                 </Box>
                 {archivedOpen && archivedChats.length > 0 && (
                   <Stack>
-                    {archivedChats.map((chat) => (
-                      <Box
-                         cursor="pointer"
-                         bg={selectedChat === chat ? "#38B2AC" : "#E8E8E8"}
-                         color={selectedChat === chat ? "white" : "black"}
-                         px={3}
-                         py={2}
-                         borderRadius="lg"
-                         key={chat._id}
-                         position="relative"
-                         onClick={() => {
-                           setSelectedChat(chat);
-                           setNotification(notification.filter((n) => n.chat && n.chat._id !== chat._id));
-                         }}
-                       >
-                         <Text>
-                           {!chat.isGroupChat
-                             ? getSender(loggedUser, chat.users)
-                           : chat.chatName}
-                         </Text>
-                         {chat.latestMessage && (
-                           <Text fontSize="xs">
-                             <b>{chat.latestMessage.sender?.name} : </b>
-                             {chat.latestMessage.content
-                               ? (chat.latestMessage.content.length > 50
-                                   ? chat.latestMessage.content.substring(0, 51) + "..."
-                                   : chat.latestMessage.content)
-                               : chat.latestMessage.attachment
-                                 ? (
-                                     <>
-                                       <span role="img" aria-label="attachment">📎</span>
-                                       {chat.latestMessage.attachment.split('/').pop()}
-                                     </>
-                                   )
-                                 : ""}
-                           </Text>
-                         )}
-                         <IconButton
-                           icon={<FaArchive />}
-                           size="sm"
-                           aria-label="Unarchive chat"
-                           position="absolute"
-                           top={2}
-                           right={9}
-                           mr={2}
-                           onClick={e => {
-                             e.stopPropagation();
-                             handleUnarchive(chat._id);
+                    {archivedChats.map((chat) => {
+                      const unreadCount = notification.filter(n => n.chat && n.chat._id === chat._id).length;
+                      return (
+                        <Box
+                           cursor="pointer"
+                           bg={selectedChat === chat ? "#38B2AC" : "#E8E8E8"}
+                           color={selectedChat === chat ? "white" : "black"}
+                           px={3}
+                           py={2}
+                           borderRadius="lg"
+                           key={chat._id}
+                           position="relative"
+                           onClick={() => {
+                             setSelectedChat(chat);
+                             setNotification(notification.filter((n) => n.chat && n.chat._id !== chat._id));
                            }}
-                           title="Unarchive chat"
-                         />
-                         <IconButton
-                           icon={<FaTrash />}
-                           size="sm"
-                           aria-label="Delete chat"
-                           position="absolute"
-                           top={2}
-                           right={2}
-                           onClick={e => {
-                             e.stopPropagation();
-                             handleDelete(chat._id);
-                           }}
-                           title="Delete chat"
-                           colorScheme="red"
-                         />
-                       </Box>
-                     ))}
+                         >
+                           <Box d="flex" justifyContent="space-between" alignItems="center">
+                             <Box d="flex" alignItems="center" flex={1} minWidth={0}>
+                               {unreadCount > 0 && (
+                                 <Box mr={2} display="flex" alignItems="center">
+                                   <NotificationBadge
+                                     count={unreadCount}
+                                     effect={Effect.SCALE}
+                                   />
+                                 </Box>
+                               )}
+                               <Text
+                                 isTruncated
+                                 maxWidth="100%"
+                                 whiteSpace="nowrap"
+                                 overflow="hidden"
+                                 textOverflow="ellipsis"
+                               >
+                                 {!chat.isGroupChat
+                                   ? getSender(loggedUser, chat.users)
+                                 : chat.chatName}
+                               </Text>
+                             </Box>
+                           </Box>
+                           {chat.latestMessage && (
+                             <Text fontSize="xs">
+                               <b>{chat.latestMessage.sender?.name} : </b>
+                               {chat.latestMessage.content
+                                 ? (chat.latestMessage.content.length > 50
+                                     ? chat.latestMessage.content.substring(0, 51) + "..."
+                                     : chat.latestMessage.content)
+                                 : chat.latestMessage.attachment
+                                   ? (
+                                       <>
+                                         <span role="img" aria-label="attachment">📎</span>
+                                         {chat.latestMessage.attachment.split('/').pop()}
+                                       </>
+                                     )
+                                   : ""}
+                             </Text>
+                           )}
+                           <IconButton
+                             icon={<FaArchive />}
+                             size="sm"
+                             aria-label="Unarchive chat"
+                             position="absolute"
+                             top={2}
+                             right={9}
+                             mr={2}
+                             onClick={e => {
+                               e.stopPropagation();
+                               handleUnarchive(chat._id);
+                             }}
+                             title="Unarchive chat"
+                           />
+                           <IconButton
+                             icon={<FaTrash />}
+                             size="sm"
+                             aria-label="Delete chat"
+                             position="absolute"
+                             top={2}
+                             right={2}
+                             onClick={e => {
+                               e.stopPropagation();
+                               handleDelete(chat._id);
+                             }}
+                             title="Delete chat"
+                             colorScheme="red"
+                           />
+                         </Box>
+                       );
+                     })}
                   </Stack>
                 )}
               </Box>
