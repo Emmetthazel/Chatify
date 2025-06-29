@@ -8,6 +8,11 @@ const messageSchema = mongoose.Schema(
     readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     attachment: { type: String },
     deletedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    forwardedFrom: {
+      name: { type: String },
+      _id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      originalChat: { type: mongoose.Schema.Types.ObjectId, ref: "Chat" }
+    },
   },
   { timestamps: true }
 );

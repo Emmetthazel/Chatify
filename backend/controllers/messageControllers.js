@@ -4,6 +4,8 @@ const User = require("../models/userModel");
 const Chat = require("../models/chatModel");
 const multer = require("multer");
 const path = require("path");
+const cloudinary = require('../config/cloudinary');
+const fs = require('fs');
 
 // Multer storage config
 const storage = multer.diskStorage({
@@ -39,11 +41,44 @@ const allMessages = asyncHandler(async (req, res) => {
 //@route           POST /api/Message/
 //@access          Protected
 const sendMessage = asyncHandler(async (req, res) => {
-  let { content, chatId } = req.body;
+  let { content, chatId, isForward, originalMessageId } = req.body;
   let attachment = null;
+  
   if (req.file) {
     const baseUrl = process.env.BASE_URL || "http://localhost:5000";
     attachment = `${baseUrl}/uploads/${req.file.filename}`;
+  } else if (req.body.attachment) {
+    attachment = req.body.attachment;
+  }
+
+  // Handle forwarding of local files
+  if (isForward && attachment && attachment.includes('localhost:5000/uploads/')) {
+    try {
+      console.log('Forwarding local file, uploading to Cloudinary...');
+      
+      // Extract filename from URL
+      const filename = attachment.split('/').pop();
+      const filePath = path.join(__dirname, '../uploads/', filename);
+      
+      // Check if file exists
+      if (fs.existsSync(filePath)) {
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(filePath, {
+          resource_type: 'auto',
+          folder: 'chatify_uploads',
+        });
+        
+        attachment = result.secure_url;
+        console.log('File uploaded to Cloudinary:', attachment);
+      } else {
+        console.log('Local file not found:', filePath);
+        // If file doesn't exist, try to use the original attachment
+        // This might happen if the file was already moved/deleted
+      }
+    } catch (error) {
+      console.error('Error uploading local file to Cloudinary:', error);
+      // Continue with original attachment if upload fails
+    }
   }
 
   // Ensure content is always a string
