@@ -108,6 +108,14 @@ const ScrollableChat = ({ messages, isGroupChat, users, deleteMessage, user }) =
     }
   }, [messages]);
 
+  // Add after your messageRefs logic
+  useEffect(() => {
+    if (messageRefs.current && messageRefs.current.length > 0) {
+      const lastMsgRef = messageRefs.current[messageRefs.current.length - 1];
+      if (lastMsgRef) lastMsgRef.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
   const handleDeleteMessage = (messageId) => {
     if (deleteMessage) {
       deleteMessage(messageId);

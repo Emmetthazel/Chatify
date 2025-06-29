@@ -12,6 +12,20 @@ import { FaArchive, FaChevronDown, FaChevronRight, FaTrash } from "react-icons/f
 import NotificationBadge from "react-notification-badge";
 import { Effect } from "react-notification-badge";
 
+function getMessagePreview(message) {
+  if (!message) return "";
+  const content = message.content ? message.content.toLowerCase() : "";
+  // Check for audio FIRST (now includes webm)
+  if (/.(mp3|wav|ogg|m4a|aac|webm)(\?|$)/i.test(content)) return "Audio";
+  // Then image
+  if (/\.(jpeg|jpg|png|gif)(\?|$)/i.test(content)) return "Image";
+  // Then video
+  if (/\.(mp4|mov|avi|mkv|webm)(\?|$)/i.test(content)) return "Video";
+  // Then document
+  if (/\.(pdf|docx?|xlsx?|pptx?|txt|zip|rar)(\?|$)/i.test(content)) return "Document";
+  return message.content;
+}
+
 const MyChats = ({ fetchAgain }) => {
   const [loggedUser, setLoggedUser] = useState();
   const [selectedTab, setSelectedTab] = useState(0); // 0: All, 1: Groups, 2: Unread
@@ -279,16 +293,16 @@ const MyChats = ({ fetchAgain }) => {
                       <Text fontSize="xs">
                         <b>{chat.latestMessage.sender?.name} : </b>
                         {chat.latestMessage.content
-                          ? (chat.latestMessage.content.length > 50
-                              ? chat.latestMessage.content.substring(0, 51) + "..."
-                              : chat.latestMessage.content)
+                          ? getMessagePreview(chat.latestMessage)
                           : chat.latestMessage.attachment
-                            ? (
-                                <>
-                                  <span role="img" aria-label="attachment">📎</span>
-                                  {chat.latestMessage.attachment.split('/').pop()}
-                                </>
-                              )
+                            ? (() => {
+                                const att = chat.latestMessage.attachment ? chat.latestMessage.attachment.toLowerCase() : "";
+                                if (/.(mp3|wav|ogg|m4a|aac|webm)(\?|$)/i.test(att)) return "Audio";
+                                if (/\.(jpeg|jpg|png|gif)(\?|$)/i.test(att)) return "Image";
+                                if (/\.(mp4|mov|avi|mkv|webm)(\?|$)/i.test(att)) return "Video";
+                                if (/\.(pdf|docx?|xlsx?|pptx?|txt|zip|rar)(\?|$)/i.test(att)) return "Document";
+                                return att.split('/').pop();
+                              })()
                             : ""}
                       </Text>
                     )}
@@ -389,16 +403,16 @@ const MyChats = ({ fetchAgain }) => {
                              <Text fontSize="xs">
                                <b>{chat.latestMessage.sender?.name} : </b>
                                {chat.latestMessage.content
-                                 ? (chat.latestMessage.content.length > 50
-                                     ? chat.latestMessage.content.substring(0, 51) + "..."
-                                     : chat.latestMessage.content)
+                                 ? getMessagePreview(chat.latestMessage)
                                  : chat.latestMessage.attachment
-                                   ? (
-                                       <>
-                                         <span role="img" aria-label="attachment">📎</span>
-                                         {chat.latestMessage.attachment.split('/').pop()}
-                                       </>
-                                     )
+                                   ? (() => {
+                                       const att = chat.latestMessage.attachment ? chat.latestMessage.attachment.toLowerCase() : "";
+                                       if (/.(mp3|wav|ogg|m4a|aac|webm)(\?|$)/i.test(att)) return "Audio";
+                                       if (/\.(jpeg|jpg|png|gif)(\?|$)/i.test(att)) return "Image";
+                                       if (/\.(mp4|mov|avi|mkv|webm)(\?|$)/i.test(att)) return "Video";
+                                       if (/\.(pdf|docx?|xlsx?|pptx?|txt|zip|rar)(\?|$)/i.test(att)) return "Document";
+                                       return att.split('/').pop();
+                                     })()
                                    : ""}
                              </Text>
                            )}

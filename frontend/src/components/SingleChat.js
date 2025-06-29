@@ -143,6 +143,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           );
           socket.emit("new message", data);
           setMessages(prevMessages => [...prevMessages, data]);
+          setFetchAgain(prev => !prev);
         } catch (error) {
           toast({
             title: "Error Occured!",
@@ -327,6 +328,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       );
       socket.emit("new message", data);
       setMessages(prevMessages => [...prevMessages, data]);
+      setFetchAgain(prev => !prev);
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -471,6 +473,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       );
       socket.emit("new message", data);
       setMessages(prevMessages => [...prevMessages, data]);
+      setFetchAgain(prev => !prev);
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -500,6 +503,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       const res = await axios.post("/api/message", data, config);
       socket.emit("new message", res.data);
       setMessages(prevMessages => [...prevMessages, res.data]);
+      setFetchAgain(prev => !prev);
     } catch (err) {
       toast({
         title: "Error uploading document",
@@ -564,6 +568,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       );
       socket.emit("new message", data);
       setMessages(prevMessages => [...prevMessages, data]);
+      setFetchAgain(prev => !prev);
     } catch (error) {
       toast({
         title: "Error Occured!",
