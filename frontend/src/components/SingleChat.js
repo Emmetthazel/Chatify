@@ -842,20 +842,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               </Box>
             ) : messages && selectedChat.isGroupChat ? (
               <Box d="flex" alignItems="center" ml={2}>
-                <IconButton
-                  icon={<i className="fas fa-phone"></i>}
-                  aria-label="Voice Call"
-                  onClick={() => initiateCall('audio')}
-                  size="md"
-                  mr={2}
-                />
-                <IconButton
-                  icon={<i className="fas fa-video"></i>}
-                  aria-label="Video Call"
-                  onClick={() => initiateCall('video')}
-                  size="md"
-                  mr={2}
-                />
                 {selectedChat.isGroupChat && (
                   <Box ml={0}>
                     <UpdateGroupChatModal
