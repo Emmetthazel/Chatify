@@ -18,6 +18,7 @@ import UpdateGroupChatModal from "./miscellaneous/UpdateGroupChatModal";
 import { ChatState } from "../Context/ChatProvider";
 import { FaMicrophone, FaStop, FaFileAlt, FaPhoneSlash, FaMicrophoneSlash, FaVideo, FaVideoSlash, FaImage } from "react-icons/fa";
 import { MdVideoLibrary } from "react-icons/md";
+import { useTheme } from "../Context/ThemeProvider";
 const ENDPOINT = "http://localhost:5000"; // "https://talk-a-tive.herokuapp.com"; -> After deployment
 var socket, selectedChatCompare;
 
@@ -54,6 +55,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const peerName = (selectedChat && selectedChat.users && selectedChat.users.find(u => u._id !== user._id)?.name) || "Contact";
   const peerAvatar = (selectedChat && selectedChat.users && selectedChat.users.find(u => u._id !== user._id)?.pic) || undefined;
   const [peerInfo, setPeerInfo] = useState(null);
+  const { theme } = useTheme();
 
   const defaultOptions = {
     loop: true,
@@ -932,6 +934,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               d={{ base: "flex", md: "none" }}
               icon={<ArrowBackIcon />}
               onClick={() => setSelectedChat("")}
+              bg={theme.colors.button}
+              color={theme.colors.buttonText}
+              _hover={{ bg: theme.colors.buttonHover }}
             />
             <Box d="flex" alignItems="center">
               {messages && !selectedChat.isGroupChat ? (
@@ -976,6 +981,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                   onClick={() => initiateCall('audio')}
                   size="md"
                   mr={2}
+                  bg={theme.colors.button}
+                  color={theme.colors.buttonText}
+                  _hover={{ bg: theme.colors.buttonHover }}
                 />
                 <IconButton
                   icon={<i className="fas fa-video"></i>}
@@ -983,6 +991,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                   onClick={() => initiateCall('video')}
                   size="md"
                   mr={2}
+                  bg={theme.colors.button}
+                  color={theme.colors.buttonText}
+                  _hover={{ bg: theme.colors.buttonHover }}
                 />
                 <ProfileModal user={getSenderFull(user, selectedChat.users)} />
               </Box>
@@ -1078,8 +1089,18 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                     fontSize: '1.3rem',
                     cursor: 'pointer',
                     padding: 0,
+                    color: theme.colors.button,
+                    borderRadius: 8,
+                    width: 36,
+                    height: 36,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'color 0.2s',
                   }}
                   aria-label="Add emoji"
+                  onMouseOver={e => e.currentTarget.style.color = theme.colors.buttonHover}
+                  onMouseOut={e => e.currentTarget.style.color = theme.colors.button}
                 >
                   🙂
                 </button>
@@ -1092,16 +1113,30 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                   aria-label="Attach"
                   variant="ghost"
                   size="lg"
-                  style={{ position: 'absolute', left: 45, top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}
+                  style={{ position: 'absolute', left: 45, top: '50%', transform: 'translateY(-50%)', zIndex: 2, background: 'none', color: theme.colors.button, borderRadius: 8 }}
+                  _hover={{ background: theme.colors.buttonHover, color: theme.colors.buttonText }}
+                  _focus={{ outline: 'none', boxShadow: 'none' }}
                 />
-                <MenuList>
-                  <MenuItem icon={<FaImage />} onClick={() => document.getElementById('chat-image-upload').click()}>
+                <MenuList bg={theme.colors.card} color={theme.colors.text} borderColor={theme.colors.border}>
+                  <MenuItem 
+                    icon={<FaImage />} 
+                    onClick={() => document.getElementById('chat-image-upload').click()}
+                    _hover={{ bg: theme.colors.buttonHover, color: theme.colors.buttonText }}
+                  >
                     Attach Image
                   </MenuItem>
-                  <MenuItem icon={<FaFileAlt />} onClick={() => document.getElementById('chat-doc-upload').click()}>
+                  <MenuItem 
+                    icon={<FaFileAlt />} 
+                    onClick={() => document.getElementById('chat-doc-upload').click()}
+                    _hover={{ bg: theme.colors.buttonHover, color: theme.colors.buttonText }}
+                  >
                     Attach Document
                   </MenuItem>
-                  <MenuItem icon={<MdVideoLibrary />} onClick={() => document.getElementById('chat-video-upload').click()}>
+                  <MenuItem 
+                    icon={<MdVideoLibrary />} 
+                    onClick={() => document.getElementById('chat-video-upload').click()}
+                    _hover={{ bg: theme.colors.buttonHover, color: theme.colors.buttonText }}
+                  >
                     Attach Video
                   </MenuItem>
                 </MenuList>

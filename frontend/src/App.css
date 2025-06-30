@@ -1,11 +1,318 @@
-@import url("https://fonts.googleapis.com/css2?family=Work+Sans:wght@300&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap");
+
+/* CSS Variables for theming - will be set by ThemeProvider */
+:root {
+  --color-primary: #cd853f;
+  --color-secondary: #a0522d;
+  --color-background: #f4e4bc;
+  --color-surface: #e8c39e;
+  --color-text: #8b4513;
+  --color-textSecondary: #a0522d;
+  --color-border: #d2b48c;
+  --color-accent: #cd853f;
+  --color-error: #b8860b;
+  --color-warning: #daa520;
+  --color-success: #228b22;
+  --color-card: rgba(245, 235, 224, 0.9);
+  --color-cardHover: rgba(238, 232, 205, 0.95);
+  --color-input: rgba(255, 250, 240, 0.95);
+  --color-inputBorder: #d2b48c;
+  --color-inputFocus: #cd853f;
+  --color-button: #d2691e;
+  --color-buttonHover: #cd853f;
+  --color-buttonText: #f5f5dc;
+  --color-tab: rgba(245, 235, 224, 0.9);
+  --color-tabActive: #cd853f;
+  --color-tabText: #a0522d;
+  --color-tabTextActive: #f5f5dc;
+  --color-header: #cd853f;
+  --color-headerText: #f5f5dc;
+  --color-chatBubble: rgba(255, 250, 240, 0.9);
+  --color-chatBubbleOwn: rgba(205, 133, 63, 0.2);
+  --color-chatBubbleText: #654321;
+  --color-chatBubbleTextOwn: #8b4513;
+  --color-sidebar: rgba(245, 235, 224, 0.8);
+  --color-sidebarHover: rgba(210, 180, 140, 0.3);
+  --color-messageInput: rgba(255, 250, 240, 0.95);
+  --color-messageInputBorder: #d2b48c;
+  --color-notification: #b8860b;
+  --color-shadow: rgba(139, 69, 19, 0.15);
+  --color-shadowHover: rgba(139, 69, 19, 0.2);
+  
+  --gradient-primary: linear-gradient(135deg, #cd853f 0%, #a0522d 100%);
+  --gradient-background: linear-gradient(135deg, #f4e4bc 0%, #e8c39e 50%, #d4a574 100%);
+  --gradient-header: linear-gradient(135deg, #cd853f 0%, #a0522d 50%, #8b4513 100%);
+  --gradient-card: linear-gradient(135deg, rgba(245, 235, 224, 0.9) 0%, rgba(238, 232, 205, 0.85) 100%);
+}
 
 .App {
   min-height: 100vh;
   display: flex;
-  background-image: url("./background.png");
-  background-position: center;
-  background-size: cover;
+  background: var(--gradient-background);
+  background-attachment: fixed;
+  position: relative;
+  font-family: 'Work Sans', sans-serif;
+  color: var(--color-text);
+}
+
+.App::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 25% 75%, rgba(205, 133, 63, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 75% 25%, rgba(160, 82, 45, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(139, 69, 19, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Authentication specific styles */
+.auth-container {
+  backdrop-filter: blur(20px);
+  background: var(--gradient-card);
+  border-radius: 24px;
+  box-shadow: 
+    0 25px 50px var(--color-shadow),
+    0 0 0 1px rgba(205, 133, 63, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  border: 1px solid rgba(210, 180, 140, 0.3);
+}
+
+.auth-container:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 35px 70px var(--color-shadowHover),
+    0 0 0 1px rgba(205, 133, 63, 0.3);
+}
+
+.auth-header {
+  background: var(--gradient-header);
+  padding: 32px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 248, 220, 0.1) 0%, transparent 70%);
+  animation: float 8s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(180deg); }
+}
+
+.auth-title {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--color-headerText);
+  text-shadow: 0 4px 20px rgba(139, 69, 19, 0.3);
+  position: relative;
+  z-index: 1;
+}
+
+/* Form styling */
+.auth-form {
+  padding: 32px 24px;
+  background: var(--gradient-card);
+}
+
+.auth-form .chakra-form-control {
+  margin-bottom: 24px;
+}
+
+.auth-form .chakra-form-label {
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 8px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.auth-form .chakra-input {
+  border-radius: 16px;
+  border: 2px solid var(--color-inputBorder);
+  padding: 16px 20px;
+  font-size: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--color-input);
+  color: var(--color-text);
+}
+
+.auth-form .chakra-input:focus {
+  border-color: var(--color-inputFocus);
+  box-shadow: 0 0 0 4px rgba(205, 133, 63, 0.15);
+  background: var(--color-input);
+  transform: translateY(-2px);
+}
+
+.auth-form .chakra-input::placeholder {
+  color: var(--color-textSecondary);
+  font-weight: 400;
+}
+
+.auth-form .chakra-button {
+  border-radius: 16px;
+  font-weight: 600;
+  padding: 16px 32px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-form .chakra-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 248, 220, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.auth-form .chakra-button:hover::before {
+  left: 100%;
+}
+
+.auth-form .chakra-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px var(--color-shadowHover);
+}
+
+/* Tab styling */
+.auth-tabs .chakra-tabs__tab-list {
+  border-radius: 16px;
+  background: var(--color-tab);
+  padding: 6px;
+  margin-bottom: 32px;
+  border: 1px solid rgba(210, 180, 140, 0.5);
+}
+
+.auth-tabs .chakra-tabs__tab {
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--color-tabText);
+  padding: 12px 24px;
+}
+
+.auth-tabs .chakra-tabs__tab:hover {
+  background: rgba(205, 133, 63, 0.15);
+  color: var(--color-text);
+}
+
+.auth-tabs .chakra-tabs__tab[aria-selected="true"] {
+  background: var(--gradient-primary);
+  color: var(--color-tabTextActive);
+  box-shadow: 0 4px 20px rgba(205, 133, 63, 0.3);
+  transform: scale(1.05);
+}
+
+/* Custom button colors */
+.auth-form .chakra-button[colorScheme="blue"] {
+  background: var(--gradient-primary);
+  color: var(--color-buttonText);
+  border: none;
+}
+
+.auth-form .chakra-button[colorScheme="red"] {
+  background: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
+  color: var(--color-buttonText);
+  border: none;
+}
+
+/* Input group styling */
+.auth-form .chakra-input-group {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.auth-form .chakra-input-group .chakra-input {
+  border-radius: 16px 0 0 16px;
+}
+
+.auth-form .chakra-input-group .chakra-input-right-element .chakra-button {
+  border-radius: 0 16px 16px 0;
+  height: 100%;
+  background: rgba(205, 133, 63, 0.15);
+  color: var(--color-text);
+  border: 2px solid var(--color-inputBorder);
+  border-left: none;
+}
+
+.auth-form .chakra-input-group .chakra-input-right-element .chakra-button:hover {
+  background: rgba(205, 133, 63, 0.25);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Chat page styling */
+.chat-container {
+  background: var(--color-background);
+  min-height: 100vh;
+}
+
+.chat-header {
+  background: var(--gradient-header);
+  color: var(--color-headerText);
+  padding: 16px 24px;
+  box-shadow: 0 4px 20px var(--color-shadow);
+}
+
+.chat-sidebar {
+  background: var(--color-sidebar);
+  border-right: 1px solid var(--color-border);
+}
+
+.chat-message {
+  background: var(--color-chatBubble);
+  color: var(--color-chatBubbleText);
+  border-radius: 16px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  max-width: 70%;
+}
+
+.chat-message-own {
+  background: var(--color-chatBubbleOwn);
+  color: var(--color-chatBubbleTextOwn);
+  margin-left: auto;
+}
+
+.chat-input {
+  background: var(--color-messageInput);
+  border: 1px solid var(--color-messageInputBorder);
+  border-radius: 16px;
+  color: var(--color-text);
+}
+
+.chat-input:focus {
+  border-color: var(--color-inputFocus);
+  box-shadow: 0 0 0 3px rgba(205, 133, 63, 0.1);
+}
+
+/* Theme selector styling */
+.theme-selector {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
 }
 
 ::-webkit-scrollbar {

@@ -6,12 +6,14 @@ import { useToast } from "@chakra-ui/toast";
 import axios from "axios";
 import { useState } from "react";
 import { useHistory } from "react-router";
+import { useTheme } from "../../Context/ThemeProvider";
 
 const Signup = () => {
   const [show, setShow] = useState(false);
   const handleClick = () => setShow(!show);
   const toast = useToast();
   const history = useHistory();
+  const { theme } = useTheme();
 
   const [name, setName] = useState();
   const [email, setEmail] = useState();
@@ -130,71 +132,89 @@ const Signup = () => {
   };
 
   return (
-    <VStack spacing="5px">
-      <FormControl id="first-name" isRequired>
-        <FormLabel>Name</FormLabel>
-        <Input
-          placeholder="Enter Your Name"
-          onChange={(e) => setName(e.target.value)}
-        />
-      </FormControl>
-      <FormControl id="email" isRequired>
-        <FormLabel>Email Address</FormLabel>
-        <Input
-          type="email"
-          placeholder="Enter Your Email Address"
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </FormControl>
-      <FormControl id="password" isRequired>
-        <FormLabel>Password</FormLabel>
-        <InputGroup size="md">
+    <div className="auth-form">
+      <VStack spacing="0px">
+        <FormControl id="first-name" isRequired>
+          <FormLabel>Name</FormLabel>
           <Input
-            type={show ? "text" : "password"}
-            placeholder="Enter Password"
-            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter Your Name"
+            onChange={(e) => setName(e.target.value)}
           />
-          <InputRightElement width="4.5rem">
-            <Button h="1.75rem" size="sm" onClick={handleClick}>
-              {show ? "Hide" : "Show"}
-            </Button>
-          </InputRightElement>
-        </InputGroup>
-      </FormControl>
-      <FormControl id="password" isRequired>
-        <FormLabel>Confirm Password</FormLabel>
-        <InputGroup size="md">
+        </FormControl>
+        <FormControl id="email" isRequired>
+          <FormLabel>Email Address</FormLabel>
           <Input
-            type={show ? "text" : "password"}
-            placeholder="Confirm password"
-            onChange={(e) => setConfirmpassword(e.target.value)}
+            type="email"
+            placeholder="Enter Your Email Address"
+            onChange={(e) => setEmail(e.target.value)}
           />
-          <InputRightElement width="4.5rem">
-            <Button h="1.75rem" size="sm" onClick={handleClick}>
-              {show ? "Hide" : "Show"}
-            </Button>
-          </InputRightElement>
-        </InputGroup>
-      </FormControl>
-      <FormControl id="pic">
-        <FormLabel>Upload your Picture</FormLabel>
-        <Input
-          type="file"
-          p={1.5}
-          accept="image/*"
-          onChange={(e) => postDetails(e.target.files[0])}
-        />
-      </FormControl>
-      <Button
-        colorScheme="blue"
-        width="100%"
-        style={{ marginTop: 15 }}
-        onClick={submitHandler}
-        isLoading={picLoading}
-      >
-        Sign Up
-      </Button>
-    </VStack>
+        </FormControl>
+        <FormControl id="password" isRequired>
+          <FormLabel>Password</FormLabel>
+          <InputGroup size="md">
+            <Input
+              type={show ? "text" : "password"}
+              placeholder="Enter Password"
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <InputRightElement width="4.5rem">
+              <Button 
+                h="1.75rem" 
+                size="sm" 
+                onClick={handleClick}
+                bg={theme.colors.button}
+                color={theme.colors.buttonText}
+                _hover={{ bg: theme.colors.buttonHover }}
+              >
+                {show ? "Hide" : "Show"}
+              </Button>
+            </InputRightElement>
+          </InputGroup>
+        </FormControl>
+        <FormControl id="password" isRequired>
+          <FormLabel>Confirm Password</FormLabel>
+          <InputGroup size="md">
+            <Input
+              type={show ? "text" : "password"}
+              placeholder="Confirm password"
+              onChange={(e) => setConfirmpassword(e.target.value)}
+            />
+            <InputRightElement width="4.5rem">
+              <Button 
+                h="1.75rem" 
+                size="sm" 
+                onClick={handleClick}
+                bg={theme.colors.button}
+                color={theme.colors.buttonText}
+                _hover={{ bg: theme.colors.buttonHover }}
+              >
+                {show ? "Hide" : "Show"}
+              </Button>
+            </InputRightElement>
+          </InputGroup>
+        </FormControl>
+        <FormControl id="pic">
+          <FormLabel>Upload your Picture</FormLabel>
+          <Input
+            type="file"
+            p={1.5}
+            accept="image/*"
+            onChange={(e) => postDetails(e.target.files[0])}
+          />
+        </FormControl>
+        <Button
+          width="100%"
+          style={{ marginTop: 15, fontWeight: 700, letterSpacing: 1 }}
+          onClick={submitHandler}
+          isLoading={picLoading}
+          bg={theme.colors.button}
+          color={theme.colors.buttonText}
+          _hover={{ bg: theme.colors.buttonHover }}
+        >
+          Sign Up
+        </Button>
+      </VStack>
+    </div>
   );
 };
 

@@ -18,6 +18,7 @@ import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, Modal
 import { useToast } from '@chakra-ui/react';
 import axios from 'axios';
 import { Menu, MenuButton, MenuList, MenuItem, MenuDivider } from '@chakra-ui/react';
+import { useTheme } from "../Context/ThemeProvider";
 
 const formatTime = (dateString) => {
   if (!dateString) return "";
@@ -49,6 +50,7 @@ const isSameDay = (d1, d2) => {
 
 const ScrollableChat = ({ messages, isGroupChat, users, deleteMessage, user }) => {
   const { user: contextUser, chats, socket } = ChatState();
+  const { theme } = useTheme();
   const toast = useToast();
   const [isForwardOpen, setIsForwardOpen] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -194,14 +196,14 @@ const ScrollableChat = ({ messages, isGroupChat, users, deleteMessage, user }) =
           position: 'sticky',
           top: 0,
           zIndex: 10,
-          background: 'rgba(255,255,255,0.85)',
+          background: theme.colors.card,
           textAlign: 'center',
           fontWeight: 500,
-          color: '#555',
+          color: theme.colors.textSecondary,
           borderRadius: 8,
           padding: '2px 12px',
           fontSize: '0.98em',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+          boxShadow: `0 1px 4px ${theme.colors.shadow}`,
           margin: '0 auto 8px auto',
           width: 'fit-content',
         }}>
@@ -323,9 +325,8 @@ const ScrollableChat = ({ messages, isGroupChat, users, deleteMessage, user }) =
                   )}
                   <span
                     style={{
-                      backgroundColor: `${
-                        m.sender._id === user._id ? "#BEE3F8" : "#B9F5D0"
-                      }`,
+                      backgroundColor: isOwnMessage ? theme.colors.chatBubbleOwn : theme.colors.chatBubble,
+                      color: isOwnMessage ? theme.colors.chatBubbleTextOwn : theme.colors.chatBubbleText,
                       marginLeft: isSameSenderMargin(messages, m, i, user._id),
                       marginTop: isSameUser(messages, m, i, user._id) ? 3 : 10,
                       borderRadius: /\.(jpg|jpeg|png|gif|mp4|mov|avi|mkv)$/i.test(m.attachment || m.content) ? '6px' : '9px',
@@ -335,48 +336,53 @@ const ScrollableChat = ({ messages, isGroupChat, users, deleteMessage, user }) =
                       display: "inline-block",
                       wordBreak: 'break-word',
                       marginBottom: /\.(jpg|jpeg|png|gif|mp4|mov|avi|mkv)$/i.test(m.attachment || m.content) ? '2px' : undefined,
+                      boxShadow: `0 1px 4px ${theme.colors.shadow}`,
+                      transition: 'background 0.2s, color 0.2s',
                     }}
                   >
                     {/* Single dropdown button for message actions */}
                     <Menu>
                       <MenuButton
                         as={IconButton}
-                        icon={<FaBars />}
+                        icon={<FaBars color={theme.colors.text} size={12} />}
                         size="xs"
-                        colorScheme="gray"
                         variant="ghost"
                         position="absolute"
                         top={-1}
                         right={-0.3}
-                        opacity={0.3}
+                        opacity={0.6}
+                        background="rgba(255, 255, 255, 0.3)"
+                        border="1px solid rgba(0, 0, 0, 0.1)"
+                        borderRadius="4px"
                         _hover={{ 
                           opacity: 1,
-                          bg: "gray.100",
-                          transform: "scale(1.1)"
+                          background: theme.colors.buttonHover,
+                          transform: "scale(1.05)"
                         }}
                         transition="all 0.2s"
                         zIndex={3}
                         aria-label="Message actions"
                         title="Message actions"
                       />
-                      <MenuList>
+                      <MenuList bg={theme.colors.card} borderColor={theme.colors.border}>
                         <MenuItem 
-                          icon={<FaShare />}
+                          icon={<FaShare color={theme.colors.buttonText} />}
                           onClick={(e) => {
                             e.stopPropagation();
                             openForwardModal(m);
                           }}
+                          _hover={{ bg: theme.colors.buttonHover, color: theme.colors.buttonText }}
                         >
                           Forward
                         </MenuItem>
                         <MenuDivider />
                         <MenuItem 
-                          icon={<DeleteIcon />}
-                          color="red.500"
+                          icon={<DeleteIcon color={theme.colors.error} />}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteMessage(m._id);
                           }}
+                          _hover={{ bg: theme.colors.buttonHover, color: theme.colors.buttonText }}
                         >
                           Delete
                         </MenuItem>

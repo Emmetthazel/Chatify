@@ -11,6 +11,7 @@ import { ChatState } from "../Context/ChatProvider";
 import { FaArchive, FaChevronDown, FaChevronRight, FaTrash } from "react-icons/fa";
 import NotificationBadge from "react-notification-badge";
 import { Effect } from "react-notification-badge";
+import { useTheme } from "../Context/ThemeProvider";
 
 function getMessagePreview(message) {
   if (!message) return "";
@@ -33,6 +34,7 @@ const MyChats = ({ fetchAgain }) => {
   const [archivedOpen, setArchivedOpen] = useState(false);
 
   const { selectedChat, setSelectedChat, user, chats, setChats, notification, setNotification } = ChatState();
+  const { theme } = useTheme();
 
   const toast = useToast();
 
@@ -190,10 +192,17 @@ const MyChats = ({ fetchAgain }) => {
       flexDir="column"
       alignItems="center"
       p={3}
-      bg="white"
+      bg={theme.colors.sidebar}
       w={{ base: "100%", md: "31%" }}
       borderRadius="lg"
       borderWidth="1px"
+      borderColor={theme.colors.border}
+      boxShadow={`0 4px 20px ${theme.colors.shadow}`}
+      transition="all 0.3s ease"
+      _hover={{
+        boxShadow: `0 8px 30px ${theme.colors.shadowHover}`,
+        transform: "translateY(-2px)"
+      }}
     >
       <Box
         pb={3}
@@ -204,18 +213,22 @@ const MyChats = ({ fetchAgain }) => {
         w="100%"
         justifyContent="space-between"
         alignItems="center"
+        color={theme.colors.text}
       >
         <Text fontWeight="bold">Chats</Text>
         <GroupChatModal>
           <Button
             d="flex"
-            bg="gray.100"
-            h="37px"
-            borderWidth="1px"
-            borderRadius="md"
-            boxShadow="sm"
             fontSize={{ base: "17px", md: "10px", lg: "17px" }}
             rightIcon={<AddIcon />}
+            bg={theme.colors.primary}
+            color={theme.colors.buttonText}
+            _hover={{
+              bg: theme.colors.buttonHover,
+              transform: "translateY(-1px)",
+              boxShadow: `0 4px 15px ${theme.colors.shadowHover}`
+            }}
+            transition="all 0.3s ease"
           >
             New Group Chat
           </Button>
@@ -240,7 +253,7 @@ const MyChats = ({ fetchAgain }) => {
         d="flex"
         flexDir="column"
         p={3}
-        bg="#F8F8F8"
+        bg={theme.colors.sidebar}
         w="100%"
         h="100%"
         borderRadius="lg"
@@ -258,13 +271,18 @@ const MyChats = ({ fetchAgain }) => {
                       setNotification(notification.filter((n) => n.chat && n.chat._id !== chat._id));
                     }}
                     cursor="pointer"
-                    bg={selectedChat === chat ? "#38B2AC" : "#E8E8E8"}
-                    color={selectedChat === chat ? "white" : "black"}
-                    px={5}
+                    bg={selectedChat === chat ? theme.colors.primary : theme.colors.sidebar}
+                    color={selectedChat === chat ? theme.colors.buttonText : theme.colors.text}
+                    px={3}
                     py={2}
                     borderRadius="lg"
                     key={chat._id}
                     position="relative"
+                    transition="all 0.3s ease"
+                    _hover={{
+                      bg: selectedChat === chat ? theme.colors.buttonHover : theme.colors.sidebarHover,
+                      transform: "translateX(4px)"
+                    }}
                   >
                     <Box d="flex" justifyContent="space-between" alignItems="center">
                       <Box d="flex" alignItems="center" flex={1} minWidth={0}>
@@ -319,6 +337,9 @@ const MyChats = ({ fetchAgain }) => {
                         handleArchive(chat._id);
                       }}
                       title="Archive chat"
+                      bg={theme.colors.button}
+                      color={theme.colors.buttonText}
+                      _hover={{ bg: theme.colors.buttonHover }}
                     />
                     <IconButton
                       icon={<FaTrash />}
@@ -332,7 +353,9 @@ const MyChats = ({ fetchAgain }) => {
                         handleDelete(chat._id);
                       }}
                       title="Delete chat"
-                      colorScheme="red"
+                      bg={theme.colors.error}
+                      color={theme.colors.buttonText}
+                      _hover={{ bg: theme.colors.warning }}
                     />
                   </Box>
                 );
@@ -348,12 +371,12 @@ const MyChats = ({ fetchAgain }) => {
                   px={2}
                   py={1}
                   borderRadius="md"
-                  _hover={{ bg: "gray.200" }}
-                  bg="gray.100"
+                  _hover={{ bg: theme.colors.cardHover }}
+                  bg={theme.colors.card}
                   mb={archivedOpen && archivedChats.length > 0 ? 2 : 0}
                 >
-                  {archivedOpen ? <FaChevronDown /> : <FaChevronRight />}
-                  <Text ml={2} fontWeight="bold">
+                  {archivedOpen ? <FaChevronDown color={theme.colors.textSecondary} /> : <FaChevronRight color={theme.colors.textSecondary} />}
+                  <Text ml={2} fontWeight="bold" color={theme.colors.textSecondary}>
                     Archived ({archivedChats.length})
                   </Text>
                 </Box>
@@ -363,90 +386,67 @@ const MyChats = ({ fetchAgain }) => {
                       const unreadCount = notification.filter(n => n.chat && n.chat._id === chat._id).length;
                       return (
                         <Box
-                           cursor="pointer"
-                           bg={selectedChat === chat ? "#38B2AC" : "#E8E8E8"}
-                           color={selectedChat === chat ? "white" : "black"}
-                           px={3}
-                           py={2}
-                           borderRadius="lg"
-                           key={chat._id}
-                           position="relative"
-                           onClick={() => {
-                             setSelectedChat(chat);
-                             setNotification(notification.filter((n) => n.chat && n.chat._id !== chat._id));
-                           }}
-                         >
-                           <Box d="flex" justifyContent="space-between" alignItems="center">
-                             <Box d="flex" alignItems="center" flex={1} minWidth={0}>
-                               {unreadCount > 0 && (
-                                 <Box mr={2} display="flex" alignItems="center">
-                                   <NotificationBadge
-                                     count={unreadCount}
-                                     effect={Effect.SCALE}
-                                   />
-                                 </Box>
-                               )}
-                               <Text
-                                 isTruncated
-                                 maxWidth="100%"
-                                 whiteSpace="nowrap"
-                                 overflow="hidden"
-                                 textOverflow="ellipsis"
-                               >
-                                 {!chat.isGroupChat
-                                   ? getSender(loggedUser, chat.users)
-                                 : chat.chatName}
-                               </Text>
-                             </Box>
-                           </Box>
-                           {chat.latestMessage && (
-                             <Text fontSize="xs">
-                               <b>{chat.latestMessage.sender?.name} : </b>
-                               {chat.latestMessage.content
-                                 ? getMessagePreview(chat.latestMessage)
-                                 : chat.latestMessage.attachment
-                                   ? (() => {
-                                       const att = chat.latestMessage.attachment ? chat.latestMessage.attachment.toLowerCase() : "";
-                                       if (/.(mp3|wav|ogg|m4a|aac|webm)(\?|$)/i.test(att)) return "Audio";
-                                       if (/\.(jpeg|jpg|png|gif)(\?|$)/i.test(att)) return "Image";
-                                       if (/\.(mp4|mov|avi|mkv|webm)(\?|$)/i.test(att)) return "Video";
-                                       if (/\.(pdf|docx?|xlsx?|pptx?|txt|zip|rar)(\?|$)/i.test(att)) return "Document";
-                                       return att.split('/').pop();
-                                     })()
-                                   : ""}
-                             </Text>
-                           )}
-                           <IconButton
-                             icon={<FaArchive />}
-                             size="sm"
-                             aria-label="Unarchive chat"
-                             position="absolute"
-                             top={2}
-                             right={9}
-                             mr={2}
-                             onClick={e => {
-                               e.stopPropagation();
-                               handleUnarchive(chat._id);
-                             }}
-                             title="Unarchive chat"
-                           />
-                           <IconButton
-                             icon={<FaTrash />}
-                             size="sm"
-                             aria-label="Delete chat"
-                             position="absolute"
-                             top={2}
-                             right={2}
-                             onClick={e => {
-                               e.stopPropagation();
-                               handleDelete(chat._id);
-                             }}
-                             title="Delete chat"
-                             colorScheme="red"
-                           />
-                         </Box>
-                       );
-                     })}
+                          cursor="pointer"
+                          bg={selectedChat === chat ? theme.colors.primary : theme.colors.sidebar}
+                          color={selectedChat === chat ? theme.colors.buttonText : theme.colors.text}
+                          px={3}
+                          py={2}
+                          borderRadius="lg"
+                          key={chat._id}
+                          position="relative"
+                          transition="all 0.3s ease"
+                          _hover={{
+                            bg: selectedChat === chat ? theme.colors.buttonHover : theme.colors.sidebarHover,
+                            transform: "translateX(4px)"
+                          }}
+                        >
+                          <Text>
+                            {!chat.isGroupChat
+                              ? getSender(loggedUser, chat.users)
+                              : chat.chatName}
+                          </Text>
+                          {chat.latestMessage && (
+                            <Text fontSize="xs">
+                              <b>{chat.latestMessage.sender.name} : </b>
+                              {getMessagePreview(chat.latestMessage)}
+                            </Text>
+                          )}
+                          <IconButton
+                            icon={<FaArchive />}
+                            size="sm"
+                            aria-label="Unarchive chat"
+                            position="absolute"
+                            top={2}
+                            right={9}
+                            mr={2}
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleUnarchive(chat._id);
+                            }}
+                            title="Unarchive chat"
+                            bg={theme.colors.button}
+                            color={theme.colors.buttonText}
+                            _hover={{ bg: theme.colors.buttonHover }}
+                          />
+                          <IconButton
+                            icon={<FaTrash />}
+                            size="sm"
+                            aria-label="Delete chat"
+                            position="absolute"
+                            top={2}
+                            right={2}
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleDelete(chat._id);
+                            }}
+                            title="Delete chat"
+                            bg={theme.colors.error}
+                            color={theme.colors.buttonText}
+                            _hover={{ bg: theme.colors.warning }}
+                          />
+                        </Box>
+                      );
+                    })}
                   </Stack>
                 )}
               </Box>

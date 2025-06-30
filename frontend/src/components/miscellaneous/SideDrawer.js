@@ -32,6 +32,8 @@ import { getSender } from "../../config/ChatLogics";
 import UserListItem from "../userAvatar/UserListItem";
 import { ChatState } from "../../Context/ChatProvider";
 import { Icon } from "@chakra-ui/react";
+import ThemeSelector from "../ThemeSelector";
+import { useTheme } from "../../Context/ThemeProvider";
 
 function SideDrawer() {
   const [search, setSearch] = useState("");
@@ -51,6 +53,7 @@ function SideDrawer() {
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const history = useHistory();
+  const { theme } = useTheme();
 
   const logoutHandler = () => {
     localStorage.removeItem("userInfo");
@@ -132,11 +135,12 @@ function SideDrawer() {
         d="flex"
         justifyContent="space-between"
         alignItems="center"
-        bg="white"
+        bg={theme.colors.card}
         w="100%"
         p="5px 10px 5px 10px"
-        borderWidth="5px"
+        borderWidth="1px"
         borderRadius="md"
+        boxShadow={`0 2px 12px ${theme.colors.shadow}`}
       >
         <Tooltip label="Search Users to chat" hasArrow placement="bottom-end">
           <Button
@@ -144,13 +148,13 @@ function SideDrawer() {
             h="37px"
             variant="outline"
             onClick={onOpen}
-            bg="gray.100"
-            //borderColor="gray.200"
+            bg={theme.colors.input}
+            borderColor={theme.colors.border}
             borderWidth="1px"
             borderRadius="md"
             boxShadow="sm"
-            _hover={{ bg: 'gray.50' }}
-            _active={{ bg: 'gray.100' }}
+            _hover={{ bg: theme.colors.cardHover }}
+            _active={{ bg: theme.colors.input }}
             leftIcon={<i className="fas fa-search"></i>}
             px={4}
             py={2}
@@ -158,41 +162,42 @@ function SideDrawer() {
             fontSize="lg"
             display="flex"
             alignItems="center"
+            color={theme.colors.text}
           >
             <Text d={{ base: "none", md: "flex" }} px={2}>
               Search Users
             </Text>
           </Button>
         </Tooltip>
-        <HStack spacing={2}>
+        <HStack spacing={4}>
           <Icon
             as={ChatIcon}
             w={6}
             h={6}
-            color="teal.400"
+            color={theme.colors.primary}
             filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))"
           />
           <Text
             fontSize="2xl"
             fontFamily="Work sans"
             fontWeight="bold"
-            bgGradient="linear(to-r, teal.400, blue.500)"
+            bgGradient={theme.gradients.primary}
             bgClip="text"
             letterSpacing="wide"
           >
             Luma
           </Text>
         </HStack>
-        <div>
+        <HStack spacing={3}>
           <Menu>
             <MenuButton p={1}>
               <NotificationBadge
                 count={notification.length}
                 effect={Effect.SCALE}
               />
-              <BellIcon fontSize="2xl" m={1} />
+              <BellIcon fontSize="2xl" m={1} color={theme.colors.primary} />
             </MenuButton>
-            <MenuList pl={2}>
+            <MenuList pl={2} bg={theme.colors.card} color={theme.colors.text}>
               {!notification.length && "No New Messages"}
               {notification.map((notif) => (
                 <MenuItem
@@ -210,7 +215,7 @@ function SideDrawer() {
             </MenuList>
           </Menu>
           <Menu>
-            <MenuButton as={Button} bg="white" rightIcon={<ChevronDownIcon />}>
+            <MenuButton as={Button} bg={theme.colors.card} rightIcon={<ChevronDownIcon color={theme.colors.primary} />}>
               <Avatar
                 size="sm"
                 cursor="pointer"
@@ -218,15 +223,16 @@ function SideDrawer() {
                 src={user.pic}
               />
             </MenuButton>
-            <MenuList>
+            <MenuList bg={theme.colors.card} color={theme.colors.text} borderColor={theme.colors.border}>
               <ProfileModal user={user}>
-                <MenuItem>My Profile</MenuItem>{" "}
+                <MenuItem _hover={{ bg: theme.colors.buttonHover, color: theme.colors.buttonText }}>My Profile</MenuItem>{" "}
               </ProfileModal>
               <MenuDivider />
-              <MenuItem onClick={logoutHandler}>Logout</MenuItem>
+              <MenuItem onClick={logoutHandler} _hover={{ bg: theme.colors.buttonHover, color: theme.colors.buttonText }}>Logout</MenuItem>
             </MenuList>
           </Menu>
-        </div>
+          <ThemeSelector />
+        </HStack>
       </Box>
 
       <Drawer placement="left" onClose={onClose} isOpen={isOpen}>
