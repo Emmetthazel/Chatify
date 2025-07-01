@@ -119,20 +119,6 @@ const Login = () => {
         >
           Login
         </Button>
-        <Button
-          width="100%"
-          mt={2}
-          style={{ fontWeight: 700, letterSpacing: 1 }}
-          onClick={() => {
-            setEmail("guest@example.com");
-            setPassword("123456");
-          }}
-          bg={theme.colors.error}
-          color={theme.colors.buttonText}
-          _hover={{ bg: theme.colors.warning }}
-        >
-          Get Guest User Credentials
-        </Button>
       </VStack>
     </div>
   );

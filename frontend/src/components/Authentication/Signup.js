@@ -203,11 +203,13 @@ const Signup = () => {
           />
         </FormControl>
         <Button
-          colorScheme="blue"
           width="100%"
-          style={{ marginTop: 15 }}
+          style={{ marginTop: 15, fontWeight: 700, letterSpacing: 1 }}
           onClick={submitHandler}
           isLoading={picLoading}
+          bg={theme.colors.button}
+          color={theme.colors.buttonText}
+          _hover={{ bg: theme.colors.buttonHover }}
         >
           Sign Up
         </Button>
