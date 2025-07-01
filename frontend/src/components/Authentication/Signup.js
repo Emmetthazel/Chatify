@@ -7,6 +7,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useHistory } from "react-router";
 import { useTheme } from "../../Context/ThemeProvider";
+import { ChatState } from "../../Context/ChatProvider";
 
 const Signup = () => {
   const [show, setShow] = useState(false);
@@ -14,6 +15,7 @@ const Signup = () => {
   const toast = useToast();
   const history = useHistory();
   const { theme } = useTheme();
+  const { setUser } = ChatState();
 
   const [name, setName] = useState();
   const [email, setEmail] = useState();
@@ -43,9 +45,9 @@ const Signup = () => {
         isClosable: true,
         position: "bottom",
       });
+      setPicLoading(false);
       return;
     }
-    console.log(name, email, password, pic);
     try {
       const config = {
         headers: {
@@ -62,7 +64,6 @@ const Signup = () => {
         },
         config
       );
-      console.log(data);
       toast({
         title: "Registration Successful",
         status: "success",
@@ -71,12 +72,13 @@ const Signup = () => {
         position: "bottom",
       });
       localStorage.setItem("userInfo", JSON.stringify(data));
+      setUser(data);
       setPicLoading(false);
       history.push("/chats");
     } catch (error) {
       toast({
         title: "Error Occured!",
-        description: error.response.data.message,
+        description: error.response?.data?.message || error.message,
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -96,9 +98,9 @@ const Signup = () => {
         isClosable: true,
         position: "bottom",
       });
+      setPicLoading(false);
       return;
     }
-    console.log(pics);
     if (pics.type === "image/jpeg" || pics.type === "image/png") {
       const data = new FormData();
       data.append("file", pics);
@@ -111,11 +113,9 @@ const Signup = () => {
         .then((res) => res.json())
         .then((data) => {
           setPic(data.url.toString());
-          console.log(data.url.toString());
           setPicLoading(false);
         })
         .catch((err) => {
-          console.log(err);
           setPicLoading(false);
         });
     } else {
@@ -203,13 +203,11 @@ const Signup = () => {
           />
         </FormControl>
         <Button
+          colorScheme="blue"
           width="100%"
-          style={{ marginTop: 15, fontWeight: 700, letterSpacing: 1 }}
+          style={{ marginTop: 15 }}
           onClick={submitHandler}
           isLoading={picLoading}
-          bg={theme.colors.button}
-          color={theme.colors.buttonText}
-          _hover={{ bg: theme.colors.buttonHover }}
         >
           Sign Up
         </Button>
@@ -218,4 +216,4 @@ const Signup = () => {
   );
 };
 
-export default Signup;
+export default Signup; 

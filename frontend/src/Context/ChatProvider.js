@@ -30,10 +30,8 @@ const ChatProvider = ({ children }) => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
     setUser(userInfo);
     setSelectedChat(undefined);
-
     if (!userInfo) history.push("/");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [history]);
+  }, [history, localStorage.getItem("userInfo")]);
 
   // Initialize socket only once
   useEffect(() => {

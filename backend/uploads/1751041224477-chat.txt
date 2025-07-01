@@ -1,9 +1,0 @@
-Dans cmd : mongod
-
-cd Chatify
-cd frontend
-npm start
-
-
-cd Chatify
-npm run start

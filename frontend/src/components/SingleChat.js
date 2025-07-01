@@ -56,6 +56,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const peerAvatar = (selectedChat && selectedChat.users && selectedChat.users.find(u => u._id !== user._id)?.pic) || undefined;
   const [peerInfo, setPeerInfo] = useState(null);
   const { theme } = useTheme();
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
   const defaultOptions = {
     loop: true,
@@ -218,11 +219,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     socket.on("connected", () => setSocketConnected(true));
     socket.on("typing", () => setIsTyping(true));
     socket.on("stop typing", () => setIsTyping(false));
+    socket.on("online-users", (users) => {
+      setOnlineUsers(users);
+    });
 
     return () => {
       socket.off("connected");
       socket.off("typing");
       socket.off("stop typing");
+      socket.off("online-users");
       socket.disconnect();
     };
   }, [user]);
@@ -941,16 +946,27 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             <Box d="flex" alignItems="center">
               {messages && !selectedChat.isGroupChat ? (
                 <>
-                  <Avatar
-                    size="md"
-                    name={getSender(user, selectedChat.users)}
-                    src={getSenderFull(user, selectedChat.users).pic}
-                    mr={2}
-                  />
-                  <Text
-                    fontWeight="bold"
-                    fontSize={{ base: "28px", md: "30px" }}
-                  >
+                  <Box position="relative" mr={2}>
+                    <Avatar
+                      size="md"
+                      name={getSender(user, selectedChat.users)}
+                      src={getSenderFull(user, selectedChat.users).pic}
+                    />
+                    {/* Point vert en bas à droite de l'avatar */}
+                    <Box
+                      position="absolute"
+                      bottom={0}
+                      right={0}
+                      width="12px"
+                      height="12px"
+                      borderRadius="50%"
+                      background={onlineUsers.includes(getSenderFull(user, selectedChat.users)._id) ? "#4caf50" : "#bbb"}
+                      border="2px solid white"
+                      zIndex={1}
+                      title={onlineUsers.includes(getSenderFull(user, selectedChat.users)._id) ? "En ligne" : "Hors ligne"}
+                    />
+                  </Box>
+                  <Text fontWeight="bold" fontSize={{ base: "28px", md: "30px" }}>
                     {getSender(user, selectedChat.users)}
                   </Text>
                 </>

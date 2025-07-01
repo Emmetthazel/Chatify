@@ -3,7 +3,7 @@ import { Box, Stack, Text } from "@chakra-ui/layout";
 import { useToast } from "@chakra-ui/toast";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { getSender } from "../config/ChatLogics";
+import { getSender, getSenderFull } from "../config/ChatLogics";
 import ChatLoading from "./ChatLoading";
 import GroupChatModal from "./miscellaneous/GroupChatModal";
 import { Button, Tabs, TabList, Tab, IconButton } from "@chakra-ui/react";
@@ -12,6 +12,8 @@ import { FaArchive, FaChevronDown, FaChevronRight, FaTrash } from "react-icons/f
 import NotificationBadge from "react-notification-badge";
 import { Effect } from "react-notification-badge";
 import { useTheme } from "../Context/ThemeProvider";
+import io from "socket.io-client";
+import { Avatar } from "@chakra-ui/avatar";
 
 function getMessagePreview(message) {
   if (!message) return "";
@@ -27,11 +29,15 @@ function getMessagePreview(message) {
   return message.content;
 }
 
+const ENDPOINT = "http://localhost:5000"; // À adapter si besoin
+let socket;
+
 const MyChats = ({ fetchAgain }) => {
   const [loggedUser, setLoggedUser] = useState();
   const [selectedTab, setSelectedTab] = useState(0); // 0: All, 1: Groups, 2: Unread
   const [archivedChats, setArchivedChats] = useState([]);
   const [archivedOpen, setArchivedOpen] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState([]); // Ajouté pour stocker les users online
 
   const { selectedChat, setSelectedChat, user, chats, setChats, notification, setNotification } = ChatState();
   const { theme } = useTheme();
@@ -173,6 +179,16 @@ const MyChats = ({ fetchAgain }) => {
     setLoggedUser(JSON.parse(localStorage.getItem("userInfo")));
     fetchChats();
     fetchArchivedChats();
+    // Connexion à Socket.io et écoute de la liste online
+    socket = io(ENDPOINT);
+    socket.emit("setup", user);
+    socket.on("online-users", (users) => {
+      setOnlineUsers(users);
+    });
+    // Nettoyage à la destruction
+    return () => {
+      if (socket) socket.disconnect();
+    };
     // eslint-disable-next-line
   }, [fetchAgain]);
 
@@ -263,6 +279,8 @@ const MyChats = ({ fetchAgain }) => {
           <>
             <Stack overflowY="scroll">
               {filteredChats.map((chat) => {
+                const otherUser = !chat.isGroupChat && getSenderFull(user, chat.users);
+                const isOnline = otherUser && onlineUsers.includes(otherUser._id);
                 const unreadCount = notification.filter(n => n.chat && n.chat._id === chat._id).length;
                 return (
                   <Box
@@ -294,6 +312,27 @@ const MyChats = ({ fetchAgain }) => {
                             />
                           </Box>
                         )}
+                        {!chat.isGroupChat && otherUser && (
+                          <Box position="relative" mr={2}>
+                            <Avatar
+                              size="sm"
+                              name={otherUser.name}
+                              src={otherUser.pic}
+                            />
+                            <Box
+                              position="absolute"
+                              bottom={0}
+                              right={0}
+                              width="10px"
+                              height="10px"
+                              borderRadius="50%"
+                              background={isOnline ? "#4caf50" : "#bbb"}
+                              border="2px solid white"
+                              zIndex={1}
+                              title={isOnline ? "En ligne" : "Hors ligne"}
+                            />
+                          </Box>
+                        )}
                         <Text
                           isTruncated
                           maxWidth="100%"
@@ -302,7 +341,7 @@ const MyChats = ({ fetchAgain }) => {
                           textOverflow="ellipsis"
                         >
                           {!chat.isGroupChat
-                            ? getSender(loggedUser, chat.users)
+                            ? otherUser.name
                             : chat.chatName}
                         </Text>
                       </Box>
@@ -383,6 +422,8 @@ const MyChats = ({ fetchAgain }) => {
                 {archivedOpen && archivedChats.length > 0 && (
                   <Stack>
                     {archivedChats.map((chat) => {
+                      const otherUser = !chat.isGroupChat && getSenderFull(user, chat.users);
+                      const isOnline = otherUser && onlineUsers.includes(otherUser._id);
                       const unreadCount = notification.filter(n => n.chat && n.chat._id === chat._id).length;
                       return (
                         <Box
@@ -400,11 +441,34 @@ const MyChats = ({ fetchAgain }) => {
                             transform: "translateX(4px)"
                           }}
                         >
-                          <Text>
-                            {!chat.isGroupChat
-                              ? getSender(loggedUser, chat.users)
-                              : chat.chatName}
-                          </Text>
+                          <Box d="flex" alignItems="center">
+                            {!chat.isGroupChat && otherUser && (
+                              <Box position="relative" mr={2}>
+                                <Avatar
+                                  size="sm"
+                                  name={otherUser.name}
+                                  src={otherUser.pic}
+                                />
+                                <Box
+                                  position="absolute"
+                                  bottom={0}
+                                  right={0}
+                                  width="10px"
+                                  height="10px"
+                                  borderRadius="50%"
+                                  background={isOnline ? "#4caf50" : "#bbb"}
+                                  border="2px solid white"
+                                  zIndex={1}
+                                  title={isOnline ? "En ligne" : "Hors ligne"}
+                                />
+                              </Box>
+                            )}
+                            <Text>
+                              {!chat.isGroupChat
+                                ? otherUser.name
+                                : chat.chatName}
+                            </Text>
+                          </Box>
                           {chat.latestMessage && (
                             <Text fontSize="xs">
                               <b>{chat.latestMessage.sender.name} : </b>

@@ -66,6 +66,8 @@ io.on("error", (error) => {
   console.error("Socket.io error:", error);
 });
 
+const onlineUsers = new Set(); // Ajouté pour suivre les utilisateurs connectés
+
 io.on("connection", (socket) => {
   console.log("Connected to socket.io");
   
@@ -77,6 +79,9 @@ io.on("connection", (socket) => {
   socket.on("setup", (userData) => {
     try {
       socket.join(userData._id);
+      socket.userId = userData._id; // Associe l'userId au socket
+      onlineUsers.add(userData._id);
+      io.emit("online-users", Array.from(onlineUsers));
       socket.emit("connected");
     } catch (error) {
       console.error("Error in setup:", error);
@@ -128,6 +133,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    if (socket.userId) {
+      onlineUsers.delete(socket.userId);
+      io.emit("online-users", Array.from(onlineUsers));
+    }
     console.log("USER DISCONNECTED");
   });
 
