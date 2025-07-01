@@ -12,6 +12,7 @@ const chatModel = mongoose.Schema(
     groupAdmin: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     deletedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    pic: { type: String, default: "https://icon-library.com/images/group-icon-png/group-icon-png-12.jpg" },
   },
   { timestamps: true }
 );

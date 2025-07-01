@@ -18,6 +18,7 @@ import { useState } from "react";
 import { ChatState } from "../../Context/ChatProvider";
 import UserBadgeItem from "../userAvatar/UserBadgeItem";
 import UserListItem from "../userAvatar/UserListItem";
+import { Input as ChakraInput } from "@chakra-ui/react";
 
 const GroupChatModal = ({ children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -27,8 +28,9 @@ const GroupChatModal = ({ children }) => {
   const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
-
   const { user, chats, setChats } = ChatState();
+  const [groupPic, setGroupPic] = useState();
+  const [picLoading, setPicLoading] = useState(false);
 
   const handleGroup = (userToAdd) => {
     if (selectedUsers.includes(userToAdd)) {
@@ -78,6 +80,34 @@ const GroupChatModal = ({ children }) => {
     setSelectedUsers(selectedUsers.filter((sel) => sel._id !== delUser._id));
   };
 
+  const postGroupPic = (picFile) => {
+    setPicLoading(true);
+    if (!picFile) {
+      setPicLoading(false);
+      return;
+    }
+    if (picFile.type === "image/jpeg" || picFile.type === "image/png") {
+      const data = new FormData();
+      data.append("file", picFile);
+      data.append("upload_preset", "chat-app");
+      data.append("cloud_name", "piyushproj");
+      fetch("https://api.cloudinary.com/v1_1/piyushproj/image/upload", {
+        method: "post",
+        body: data,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setGroupPic(data.url.toString());
+          setPicLoading(false);
+        })
+        .catch((err) => {
+          setPicLoading(false);
+        });
+    } else {
+      setPicLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!groupChatName || !selectedUsers) {
       toast({
@@ -101,6 +131,7 @@ const GroupChatModal = ({ children }) => {
         {
           name: groupChatName,
           users: JSON.stringify(selectedUsers.map((u) => u._id)),
+          pic: groupPic,
         },
         config
       );
@@ -179,6 +210,15 @@ const GroupChatModal = ({ children }) => {
                   />
                 ))
             )}
+            <FormControl>
+              <ChakraInput
+                type="file"
+                p={1.5}
+                accept="image/*"
+                onChange={(e) => postGroupPic(e.target.files[0])}
+                mb={3}
+              />
+            </FormControl>
           </ModalBody>
           <ModalFooter>
             <Button onClick={handleSubmit} colorScheme="blue">

@@ -972,18 +972,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 </>
               ) : messages && selectedChat.isGroupChat ? (
                 <>
-                  {selectedChat.pic && (
-                    <Avatar
-                      size="md"
-                      name={selectedChat.chatName}
-                      src={selectedChat.pic}
-                      mr={2}
-                    />
-                  )}
-                  <Text
-                    fontWeight="bold"
-                    fontSize={{ base: "28px", md: "30px" }}
-                  >
+                  <Avatar
+                    size="md"
+                    name={selectedChat.chatName}
+                    src={selectedChat.pic}
+                    mr={2}
+                  />
+                  <Text fontWeight="bold" fontSize={{ base: "28px", md: "30px" }}>
                     {selectedChat.chatName && selectedChat.chatName}
                   </Text>
                 </>

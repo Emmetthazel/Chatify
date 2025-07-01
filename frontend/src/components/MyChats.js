@@ -312,7 +312,14 @@ const MyChats = ({ fetchAgain }) => {
                             />
                           </Box>
                         )}
-                        {!chat.isGroupChat && otherUser && (
+                        {chat.isGroupChat ? (
+                          <Avatar
+                            size="sm"
+                            name={chat.chatName}
+                            src={chat.pic}
+                            mr={2}
+                          />
+                        ) : otherUser && (
                           <Box position="relative" mr={2}>
                             <Avatar
                               size="sm"

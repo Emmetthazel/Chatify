@@ -15,6 +15,7 @@ import {
   Box,
   IconButton,
   Spinner,
+  Input as ChakraInput,
 } from "@chakra-ui/react";
 import axios from "axios";
 import { useState } from "react";
@@ -30,6 +31,8 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
   const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
   const [renameloading, setRenameLoading] = useState(false);
+  const [groupPic, setGroupPic] = useState();
+  const [picLoading, setPicLoading] = useState(false);
   const toast = useToast();
 
   const { selectedChat, setSelectedChat, user } = ChatState();
@@ -65,8 +68,36 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
     }
   };
 
+  const postGroupPic = (picFile) => {
+    setPicLoading(true);
+    if (!picFile) {
+      setPicLoading(false);
+      return;
+    }
+    if (picFile.type === "image/jpeg" || picFile.type === "image/png") {
+      const data = new FormData();
+      data.append("file", picFile);
+      data.append("upload_preset", "chat-app");
+      data.append("cloud_name", "piyushproj");
+      fetch("https://api.cloudinary.com/v1_1/piyushproj/image/upload", {
+        method: "post",
+        body: data,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setGroupPic(data.url.toString());
+          setPicLoading(false);
+        })
+        .catch((err) => {
+          setPicLoading(false);
+        });
+    } else {
+      setPicLoading(false);
+    }
+  };
+
   const handleRename = async () => {
-    if (!groupChatName) return;
+    if (!groupChatName && !groupPic) return;
 
     if (selectedChat.groupAdmin._id !== user._id) {
       toast({
@@ -90,13 +121,12 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
         `/api/chat/rename`,
         {
           chatId: selectedChat._id,
-          chatName: groupChatName,
+          chatName: groupChatName || selectedChat.chatName,
+          pic: groupPic,
         },
         config
       );
 
-      console.log(data._id);
-      // setSelectedChat("");
       setSelectedChat(data);
       setFetchAgain(!fetchAgain);
       setRenameLoading(false);
@@ -278,6 +308,17 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
                   placeholder="Add User to group"
                   mb={1}
                   onChange={(e) => handleSearch(e.target.value)}
+                />
+              </FormControl>
+            )}
+            {isAdmin && (
+              <FormControl>
+                <ChakraInput
+                  type="file"
+                  p={1.5}
+                  accept="image/*"
+                  onChange={(e) => postGroupPic(e.target.files[0])}
+                  mb={3}
                 />
               </FormControl>
             )}

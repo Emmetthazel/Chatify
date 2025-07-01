@@ -112,6 +112,7 @@ const createGroupChat = asyncHandler(async (req, res) => {
       users: users,
       isGroupChat: true,
       groupAdmin: req.user,
+      pic: req.body.pic || undefined,
     });
 
     const fullGroupChat = await Chat.findOne({ _id: groupChat._id })
@@ -129,13 +130,14 @@ const createGroupChat = asyncHandler(async (req, res) => {
 // @route   PUT /api/chat/rename
 // @access  Protected
 const renameGroup = asyncHandler(async (req, res) => {
-  const { chatId, chatName } = req.body;
+  const { chatId, chatName, pic } = req.body;
+
+  const updateFields = { chatName };
+  if (pic) updateFields.pic = pic;
 
   const updatedChat = await Chat.findByIdAndUpdate(
     chatId,
-    {
-      chatName: chatName,
-    },
+    updateFields,
     {
       new: true,
     }
