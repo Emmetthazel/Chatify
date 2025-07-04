@@ -1,7 +1,6 @@
 # Luma
 
-Luma is a Full Stack Chatting App.
-Uses Socket.io for real time communication and stores user details in encrypted format in Mongo DB Database.
+Luma is a full-stack real-time chat application that supports text messaging, voice notes, media sharing (images, videos, documents), and both voice and video calls. It uses Socket.io for low-latency communication and MongoDB for secure data storage, with user credentials stored in encrypted format. The app ensures a seamless and secure chatting experience across devices.
 
 ## Tech Stack
 
