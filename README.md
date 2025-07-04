@@ -16,7 +16,7 @@ Uses Socket.io for real time communication and stores user details in encrypted 
 Clone the project
 
 ```bash
-  git clone https://github.com/piyush-eon/Luma
+  git clone https://github.com/Emmetthazel/Luma.git
 ```
 
 Go to the project directory
@@ -49,3 +49,16 @@ Start the Client
   cd frontend
   npm start
 ```
+
+## App Preview
+
+![Screenshot 1](./Interfaces/1.png)
+![Screenshot 2](./Interfaces/2.png)
+![Screenshot 3](./Interfaces/3.png)
+![Screenshot 4](./Interfaces/4.png)
+![Screenshot 5](./Interfaces/5.png)
+![Screenshot 6](./Interfaces/6.png)
+![Screenshot 7](./Interfaces/7.png)
+![Screenshot 8](./Interfaces/8.png)
+![Screenshot 9](./Interfaces/9.png)
+![Screenshot 12](./Interfaces/12.png)
